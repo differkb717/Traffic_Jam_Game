@@ -214,8 +214,8 @@
             <button class="modal-close-button" id="close-instructions-button">&times;</button>
             <h2 class="text-2xl font-bold mb-4 text-gray-800">遊戲說明：</h2>
             <ul class="list-disc list-inside text-gray-700 text-base">
-                <li>目標：移動紅色車 X 到右側開孔的出口。</li>
-                <li>玩法：拖曳車輛上下或左右移動它們。</li>
+                 <li>目標：移動紅色車 X 到右側開孔的出口。</li>
+                 <li>玩法：拖曳車輛上下或左右移動它們。</li>
             </ul>
         </div>
     </div>
@@ -476,7 +476,7 @@
                 clientY = e.touches[0].clientY;
             } else {
                 clientX = e.clientX;
-                clientY = e.clientY;
+                clientY = e.clientY; // Fix: Changed from e.clientX to e.clientY
             }
 
             // Calculate offset from top-left of vehicle to mouse/touch point
@@ -505,7 +505,7 @@
                 clientY = e.touches[0].clientY;
             } else {
                 clientX = e.clientX;
-                clientY = e.clientX;
+                clientY = e.clientY; // Fix: Changed from e.clientX to e.clientY
             }
 
             const boardRect = gameBoard.getBoundingClientRect();
