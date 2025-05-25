@@ -121,6 +121,62 @@
         .color-Q { background-color: #1E90FF; } /* DodgerBlue Truck (Blue Truck on card) */
         .color-R { background-color: #228B22; } /* ForestGreen Truck (Dark Green Truck on card) */
 
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Ensure it's on top of everything */
+            visibility: hidden; /* Hidden by default */
+            opacity: 0; /* Start with opacity 0 for fade effect */
+            transition: visibility 0s, opacity 0.3s ease-in-out;
+        }
+
+        .modal-overlay.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            position: relative;
+            max-width: 90vw; /* Responsive width */
+            max-height: 80vh; /* Responsive height */
+            overflow-y: auto; /* Enable scrolling for long content */
+            transform: scale(0.9); /* Start slightly smaller for pop effect */
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #333;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .modal-close-button:hover {
+            background-color: #eee;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
@@ -146,16 +202,22 @@
         <button id="next-level-button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out hidden">
             下一關
         </button>
+        <button id="show-instructions-button" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
+            遊戲說明
+        </button>
     </div>
     
     <div id="win-message" class="mt-4 p-3 text-center text-xl font-semibold message-box"></div>
 
-    <div class="mt-8 p-4 bg-white rounded-lg shadow-md w-full max-w-md text-sm text-gray-700">
-        <h2 class="text-lg font-semibold mb-2">遊戲說明：</h2>
-        <ul class="list-disc list-inside">
-            <li>目標：移動紅色車 X 到右側開孔的出口。</li>
-            <li>玩法：拖曳車輛上下或左右移動它們。</li>
+    <div id="instructions-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-button" id="close-instructions-button">&times;</button>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">遊戲說明：</h2>
+            <ul class="list-disc list-inside text-gray-700 text-base">
+                <li>目標：移動紅色車 X 到右側開孔的出口。</li>
+                <li>玩法：拖曳車輛上下或左右移動它們。</li>
             </ul>
+        </div>
     </div>
 
     <script>
@@ -163,7 +225,10 @@
         const resetButton = document.getElementById('reset-button');
         const nextLevelButton = document.getElementById('next-level-button');
         const winMessage = document.getElementById('win-message');
-        const levelSelect = document.getElementById('level-select'); // Reference to the new select element
+        const levelSelect = document.getElementById('level-select'); 
+        const showInstructionsButton = document.getElementById('show-instructions-button');
+        const instructionsModal = document.getElementById('instructions-modal');
+        const closeInstructionsButton = document.getElementById('close-instructions-button');
 
         const GRID_SIZE = 6;
         let CELL_SIZE_PX; 
@@ -440,7 +505,7 @@
                 clientY = e.touches[0].clientY;
             } else {
                 clientX = e.clientX;
-                clientY = e.clientY;
+                clientY = e.clientX;
             }
 
             const boardRect = gameBoard.getBoundingClientRect();
@@ -629,6 +694,22 @@
         });
         
         window.addEventListener('resize', handleResize);
+
+        // --- Modal Event Listeners ---
+        showInstructionsButton.addEventListener('click', () => {
+            instructionsModal.classList.add('show');
+        });
+
+        closeInstructionsButton.addEventListener('click', () => {
+            instructionsModal.classList.remove('show');
+        });
+
+        // Close modal if clicking outside the content
+        instructionsModal.addEventListener('click', (e) => {
+            if (e.target === instructionsModal) {
+                instructionsModal.classList.remove('show');
+            }
+        });
 
         // --- Initial Game Setup ---
         calculateCellSize(); // Determine initial cell size
