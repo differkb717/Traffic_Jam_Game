@@ -19,11 +19,10 @@
             height: 90vw; /* Responsive height */
             max-height: 420px; /* Max height for larger screens */
             
-            /* Thicker borders on all sides by default */
             border-left: 5px solid #333;
             border-top: 5px solid #333;
             border-bottom: 5px solid #333;
-            border-right: 5px solid #333; /* Keep this border, the filler will cover it */
+            border-right: 5px solid #333; 
             
             position: relative;
             background-color: #f0f0f0;
@@ -31,15 +30,14 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             margin: 0 auto; /* Center the board */
             
-            /* Add grid lines using CSS gradients */
             background-image:
                 linear-gradient(to right, #ccc 1px, transparent 1px),
                 linear-gradient(to bottom, #ccc 1px, transparent 1px);
-            background-size: calc(100% / 6) calc(100% / 6); /* For 6x6 grid */
-            background-position: 0 0; /* Start lines from top-left */
-            z-index: 1; /* Added z-index to establish a stacking context */
+            background-size: calc(100% / 6) calc(100% / 6); 
+            background-position: 0 0; 
+            z-index: 1; 
         }
-        .grid-cell { /* Not actively used for drawing, but good for concept */
+        .grid-cell { 
             border: 1px solid #ccc;
             box-sizing: border-box;
         }
@@ -55,73 +53,66 @@
             color: white;
             text-shadow: 1px 1px 1px #555;
             cursor: grab;
-            user-select: none; /* Prevent text selection when dragging */
-            transition: transform 0.1s ease-out; /* Smooth movement for snapping */
-            z-index: 10; /* Vehicles should always be on top */
+            user-select: none; 
+            transition: transform 0.1s ease-out; 
+            z-index: 10; 
         }
         .vehicle.dragging {
             cursor: grabbing;
-            z-index: 11; /* Even higher when dragging */
+            z-index: 11; 
             opacity: 0.8;
         }
         .exit-area {
             position: absolute;
-            background-color: rgba(0, 255, 0, 0.3); /* Light green transparent */
-            z-index: 0; /* Behind vehicles, but above board's background */
-            /* No direct border here, the 'hole' in the board border will be handled by exit-border-filler */
+            background-color: rgba(0, 255, 0, 0.3); 
+            z-index: 0; 
         }
         
-        /* This element will cover the game board's right border at the exit row */
         .exit-border-filler {
             position: absolute;
-            /* Top and Height will be set by JS */
-            right: -5px; /* Position just outside the board's default right border */
-            width: 5px; /* Match the border width */
-            background-color: #f0f0f0; /* Match game board background color to hide the border */
-            z-index: 2; /* Should be above the board's border to cover it */
-            /* Removed border-radius as it's in the middle of a side, not a corner */
+            right: -5px; 
+            width: 5px; 
+            background-color: #f0f0f0; 
+            z-index: 2; 
         }
 
         .exit-area::after {
-            content: '→'; /* Right arrow character */
+            content: '→'; 
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%); /* Center the arrow */
-            font-size: 2.5em; /* Adjust size as needed */
-            color: #333; /* Dark color for visibility */
-            text-shadow: 1px 1px 2px rgba(255,255,255,0.7); /* Optional: add a subtle shadow */
-            z-index: 1; /* Ensure arrow is above the transparent background of exit-area */
+            transform: translate(-50%, -50%); 
+            font-size: 2.5em; 
+            color: #333; 
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.7); 
+            z-index: 1; 
         }
         .message-box {
-            min-height: 30px; /* Ensure space even when empty */
+            min-height: 30px; 
             border-radius: 8px;
         }
 
-        /* Vehicle specific styles */
         .car { /* 2 units long */ }
         .truck { /* 3 units long */ }
 
-        /* Color mapping based on the "COLOR CODE" card */
-        .color-X { background-color: #FF0000; } /* Red */
-        .color-A { background-color: #32CD32; } /* LimeGreen (Light Green on card) */
-        .color-B { background-color: #FFD700; } /* Gold (Yellow car on card) */
-        .color-C { background-color: #1E90FF; } /* DodgerBlue (Blue car on card) */
-        .color-D { background-color: #FFB6C1; } /* LightPink */
-        .color-E { background-color: #9932CC; } /* DarkOrchid (Purple on card) */
-        .color-F { background-color: #228B22; } /* ForestGreen (Dark Green on card) */
-        .color-G { background-color: #778899; } /* SlateGray */
-        .color-H { background-color: #F5F5DC; color: #333; text-shadow: none; } /* Beige */
-        .color-I { background-color: #FFFF00; color: #333; text-shadow: none; } /* Yellow */
-        .color-J { background-color: #8B4513; } /* SaddleBrown */
-        .color-K { background-color: #808000; } /* OliveDrab */
+        .color-X { background-color: #FF0000; } 
+        .color-A { background-color: #32CD32; } 
+        .color-B { background-color: #FFD700; } 
+        .color-C { background-color: #1E90FF; } 
+        .color-D { background-color: #FFB6C1; } 
+        .color-E { background-color: #9932CC; } 
+        .color-F { background-color: #228B22; } 
+        .color-G { background-color: #778899; } 
+        .color-H { background-color: #F5F5DC; color: #333; text-shadow: none; } 
+        .color-I { background-color: #FFFF00; color: #333; text-shadow: none; } 
+        .color-J { background-color: #8B4513; } 
+        .color-K { background-color: #808000; } 
 
-        .color-O { background-color: #FFD700; color: #333; text-shadow: none; } /* Gold Truck (Yellow Truck on card) */
-        .color-P { background-color: #9932CC; } /* DarkOrchid Truck (Purple Truck on card) */
-        .color-Q { background-color: #1E90FF; } /* DodgerBlue Truck (Blue Truck on card) */
-        .color-R { background-color: #228B22; } /* ForestGreen Truck (Dark Green Truck on card) */
+        .color-O { background-color: #FFD700; color: #333; text-shadow: none; } 
+        .color-P { background-color: #9932CC; } 
+        .color-Q { background-color: #1E90FF; } 
+        .color-R { background-color: #228B22; } 
 
-        /* Modal styles */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -132,9 +123,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000; /* Ensure it's on top of everything */
-            visibility: hidden; /* Hidden by default */
-            opacity: 0; /* Start with opacity 0 for fade effect */
+            z-index: 1000; 
+            visibility: hidden; 
+            opacity: 0; 
             transition: visibility 0s, opacity 0.3s ease-in-out;
         }
 
@@ -149,10 +140,10 @@
             border-radius: 12px;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
             position: relative;
-            max-width: 90vw; /* Responsive width */
-            max-height: 80vh; /* Responsive height */
-            overflow-y: auto; /* Enable scrolling for long content */
-            transform: scale(0.9); /* Start slightly smaller for pop effect */
+            max-width: 90vw; 
+            max-height: 80vh; 
+            overflow-y: auto; 
+            transform: scale(0.9); 
             transition: transform 0.3s ease-in-out;
         }
 
@@ -184,16 +175,20 @@
     <div class="w-full max-w-md mb-4 text-center">
         <h1 class="text-3xl font-bold text-gray-700">Traffic Jam 遊戲</h1>
         <p class="text-gray-600">將紅色車 (X) 移到出口！</p>
-        <div class="mt-2">
-            <span class="text-lg">關卡: 
-                <select id="level-select" class="ml-2 p-1 border border-gray-300 rounded-md">
-                    </select>
-            </span>
+        
+        <div class="mt-3 flex flex-col items-center sm:flex-row sm:justify-center sm:items-center sm:space-x-2 mb-2">
+            <label for="difficulty-select" class="text-lg mr-1 sm:mr-2">難易度:</label>
+            <select id="difficulty-select" class="p-1 border border-gray-300 rounded-md mb-2 sm:mb-0 sm:mr-3 text-base">
+                </select>
+        
+            <label for="specific-level-select" class="text-lg mr-1 sm:mr-2">選擇關卡:</label>
+            <select id="specific-level-select" class="p-1 border border-gray-300 rounded-md text-base">
+                </select>
         </div>
     </div>
 
     <div id="game-board" class="game-board">
-        </div>
+    </div>
 
     <div class="mt-6 flex space-x-4">
         <button id="reset-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
@@ -214,8 +209,8 @@
             <button class="modal-close-button" id="close-instructions-button">&times;</button>
             <h2 class="text-2xl font-bold mb-4 text-gray-800">遊戲說明：</h2>
             <ul class="list-disc list-inside text-gray-700 text-base">
-                 <li>目標：移動紅色車 X 到右側開孔的出口。</li>
-                 <li>玩法：拖曳車輛上下或左右移動它們。</li>
+                <li>目標：移動紅色車 X 到右側開孔的出口。</li>
+                <li>玩法：拖曳車輛上下或左右移動它們。</li>
             </ul>
         </div>
     </div>
@@ -225,7 +220,10 @@
         const resetButton = document.getElementById('reset-button');
         const nextLevelButton = document.getElementById('next-level-button');
         const winMessage = document.getElementById('win-message');
-        const levelSelect = document.getElementById('level-select'); 
+        // New select elements
+        const difficultySelect = document.getElementById('difficulty-select');
+        const specificLevelSelect = document.getElementById('specific-level-select'); 
+        
         const showInstructionsButton = document.getElementById('show-instructions-button');
         const instructionsModal = document.getElementById('instructions-modal');
         const closeInstructionsButton = document.getElementById('close-instructions-button');
@@ -233,7 +231,7 @@
         const GRID_SIZE = 6;
         let CELL_SIZE_PX; 
 
-        let currentLevelIndex = 0;
+        let currentLevelIndex = 0; // This will be the 0-based index for gameLevels array
         let vehicles = []; 
         let boardState = []; 
 
@@ -241,12 +239,22 @@
         let offsetX, offsetY; 
         let initialGridRow, initialGridCol;
 
+        // --- Difficulty Definitions ---
+        const difficulties = {
+            BEGINNER: { name: '初級 (1-10)', startLevel: 1, endLevel: 10 },
+            INTERMEDIATE: { name: '中級 (11-20)', startLevel: 11, endLevel: 20 },
+            ADVANCED: { name: '高級 (21-30)', startLevel: 21, endLevel: 30 },
+            EXPERT: { name: '專家 (31-40)', startLevel: 31, endLevel: 40 }
+        };
+
         // --- Level Definitions ---
+        // IMPORTANT: Ensure levelNumber is correct and corresponds to the 1-based overall level count.
+        // For this example, I'll add a few more levels to test difficulties.
+        // Please populate with your actual level data.
         const gameLevels = [
-            { // Level 1 
-                levelNumber: 1,// 註：所有 row (行) 和 col (列) 均為 0-indexed (即從0開始計算)。
-                exitRow: 2, // The row where the red car X exits (0-indexed)
-                vehicles: [
+            { // Level 1 (BEGINNER)
+                levelNumber: 1, exitRow: 2, 
+                vehicles: [ /* ... Level 1 vehicles from your original code ... */ 
                     { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 1, isPlayer: true }, 
                     { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'horizontal', row: 0, col: 0 }, 
                     { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 1, col: 0 },
@@ -254,14 +262,12 @@
                     { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'vertical', row: 1, col: 3},
                     { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 4, col: 0 }, 
                     { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'horizontal', row: 4, col: 4 },
-                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'horizontal', row: 5, col: 2 } 
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'horizontal', row: 5, col: 2 }
                 ]
             },
-           { // Level 2 
-                levelNumber: 2,// 註：所有 row (行) 和 col (列) 均為 0-indexed (即從0開始計算)。
-                exitRow: 2, // 紅色車 X 的目標出口行 (0-indexed)
-                vehicles: [
-                    // 每一輛車的 (row, col) 代表其左上角在6x6網格中的位置。
+            { // Level 2 (BEGINNER)
+                levelNumber: 2, exitRow: 2, 
+                vehicles: [ /* ... Level 2 vehicles from your original code ... */ 
                     { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0, isPlayer: true }, 
                     { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'vertical', row: 0, col: 0 },  
                     { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 1, col: 5 }, 
@@ -413,7 +419,7 @@
                     { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'horizontal', row: 3, col: 1 }, 
                 ]
             },
-            { // Level 11 
+            { // Level 11 (INTERMEDIATE)
                 levelNumber: 11,// 註：所有 row (行) 和 col (列) 均為 0-indexed (即從0開始計算)。
                 exitRow: 2, // 紅色車 X 的目標出口行 (0-indexed)
                 vehicles: [
@@ -428,48 +434,166 @@
                     { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'horizontal', row: 5, col: 2 }, 
                 ]
             },
+            { // Level 12 (INTERMEDIATE)
+                levelNumber: 12,// 註：所有 row (行) 和 col (列) 均為 0-indexed (即從0開始計算)。
+                exitRow: 2, // 紅色車 X 的目標出口行 (0-indexed)
+                vehicles: [
+                    // 每一輛車的 (row, col) 代表其左上角在6x6網格中的位置。
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'vertical', row: 0, col: 0},  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'horizontal', row: 0, col: 1 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'vertical', row: 4, col: 4 }, 
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'vertical', row: 0, col: 5 }, 
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 1, col: 2 }, 
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'horizontal', row: 3, col: 3 }, 
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'horizontal', row: 5, col: 0 }, 
+                ]
+            },
+            { // Level 13 (INTERMEDIATE)
+                levelNumber: 13,// 註：所有 row (行) 和 col (列) 均為 0-indexed (即從0開始計算)。
+                exitRow: 2, // 紅色車 X 的目標出口行 (0-indexed)
+                vehicles: [
+                    // 每一輛車的 (row, col) 代表其左上角在6x6網格中的位置。
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 3, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'horizontal', row: 0, col: 0},  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'horizontal', row: 0, col: 2 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'vertical', row: 0, col: 4 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 1, col: 2 },
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'vertical', row: 2, col: 1 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'horizontal', row: 3, col: 3 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'vertical', row: 4, col: 3 },
+                    { id: 'H', type: 'car', colorName: 'H', length: 2, orientation: 'horizontal', row: 4, col: 4 },
+                    { id: 'I', type: 'car', colorName: 'I', length: 2, orientation: 'horizontal', row: 5, col: 1 },
+                    { id: 'K', type: 'car', colorName: 'K', length: 2, orientation: 'horizontal', row: 5, col: 4 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'vertical', row: 1, col: 5 }, 
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 3, col: 0 }, 
+                ]
+            },
+            { // Level 14 (INTERMEDIATE)
+                levelNumber: 14,// 註：所有 row (行) 和 col (列) 均為 0-indexed (即從0開始計算)。
+                exitRow: 2, // 紅色車 X 的目標出口行 (0-indexed)
+                vehicles: [
+                    // 每一輛車的 (row, col) 代表其左上角在6x6網格中的位置。
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 2, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'horizontal', row: 0, col: 0},  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 0, col: 2 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'horizontal', row: 1, col: 4 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 2, col: 0 },
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'vertical', row: 2, col: 1 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'vertical', row: 2, col: 4 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'vertical', row: 2, col: 5 },
+                    { id: 'H', type: 'car', colorName: 'H', length: 2, orientation: 'horizontal', row: 3, col: 2 },
+                    { id: 'I', type: 'car', colorName: 'I', length: 2, orientation: 'vertical', row: 4, col: 2 },
+                    { id: 'J', type: 'car', colorName: 'J', length: 2, orientation: 'horizontal', row: 4, col: 4 },
+                    { id: 'K', type: 'car', colorName: 'K', length: 2, orientation: 'horizontal', row: 5, col: 0 },
+                ]
+            },
             // You can add more levels here!
+            // ... (Levels 13-20 for INTERMEDIATE)
+            // ... (Levels 21-30 for ADVANCED)
+            // ... (Levels 31-40 for EXPERT)
         ];
 
-        /**
-         * Calculates the size of each grid cell based on the game board's current width.
-         * This ensures responsiveness.
-         */
         function calculateCellSize() {
             CELL_SIZE_PX = gameBoard.clientWidth / GRID_SIZE;
         }
         
-        /**
-         * Populates the level selection dropdown with options for each game level.
-         */
-        function populateLevelSelect() {
-            levelSelect.innerHTML = ''; // Clear existing options
-            gameLevels.forEach((level, index) => {
+        function populateDifficultySelect() {
+            difficultySelect.innerHTML = '';
+            for (const key in difficulties) {
                 const option = document.createElement('option');
-                option.value = index;
-                option.textContent = `關卡: ${level.levelNumber}`;
-                levelSelect.appendChild(option);
-            });
-            // Set the initial selected level
-            levelSelect.value = currentLevelIndex;
+                option.value = key;
+                option.textContent = difficulties[key].name;
+                difficultySelect.appendChild(option);
+            }
         }
 
-        /**
-         * Sets up the game board for a given level.
-         * Clears previous vehicles, initializes board state, and renders new vehicles and the exit area.
-         * @param {number} levelIndex - The index of the level to set up.
-         */
-        function setupLevel(levelIndex) {
-            currentLevelIndex = levelIndex;
-            const levelData = gameLevels[levelIndex];
-            levelSelect.value = levelIndex; // Update dropdown selection
+        function populateSpecificLevelSelect(difficultyKey, selectedLevelNum = null) {
+            const difficulty = difficulties[difficultyKey];
+            specificLevelSelect.innerHTML = ''; // Clear existing options
+
+            if (!difficulty) {
+                specificLevelSelect.innerHTML = '<option value="">--</option>';
+                return;
+            }
+
+            let firstAvailableLevelInDifficulty = null;
+
+            for (let i = difficulty.startLevel; i <= difficulty.endLevel; i++) {
+                const levelExists = gameLevels.find(lvl => lvl.levelNumber === i);
+                if (levelExists) { 
+                    if (firstAvailableLevelInDifficulty === null) {
+                        firstAvailableLevelInDifficulty = i;
+                    }
+                    const option = document.createElement('option');
+                    option.value = i; // Store actual level number
+                    option.textContent = `關卡 ${i}`; // Simpler text
+                    specificLevelSelect.appendChild(option);
+                }
+            }
+            
+            if (selectedLevelNum && specificLevelSelect.querySelector(`option[value="${selectedLevelNum}"]`)) {
+                 specificLevelSelect.value = selectedLevelNum;
+            } else if (firstAvailableLevelInDifficulty) {
+                specificLevelSelect.value = firstAvailableLevelInDifficulty;
+            } else {
+                 specificLevelSelect.innerHTML = '<option value="">無關卡</option>';
+            }
+        }
+        
+        function updateDropdownsToReflectLevel(levelIdx) {
+            const levelData = gameLevels[levelIdx];
+            if (!levelData) return;
+            const actualLevelNumber = levelData.levelNumber;
+
+            let selectedDifficultyKey = null;
+            for (const key in difficulties) {
+                if (actualLevelNumber >= difficulties[key].startLevel && actualLevelNumber <= difficulties[key].endLevel) {
+                    selectedDifficultyKey = key;
+                    break;
+                }
+            }
+
+            if (selectedDifficultyKey) {
+                if (difficultySelect.value !== selectedDifficultyKey) {
+                    difficultySelect.value = selectedDifficultyKey;
+                    // If difficulty changed, repopulate specific levels
+                    populateSpecificLevelSelect(selectedDifficultyKey, actualLevelNumber);
+                } else {
+                    // Difficulty same, just ensure correct level is selected
+                     if (specificLevelSelect.querySelector(`option[value="${actualLevelNumber}"]`)) {
+                        specificLevelSelect.value = actualLevelNumber;
+                    } else { // Level might not be in current specific list (e.g. after filtering if levels were sparse)
+                        populateSpecificLevelSelect(selectedDifficultyKey, actualLevelNumber);
+                    }
+                }
+            } else { // Fallback
+                const firstDiffKey = Object.keys(difficulties)[0];
+                difficultySelect.value = firstDiffKey;
+                populateSpecificLevelSelect(firstDiffKey);
+            }
+        }
+
+
+        function setupLevel(levelIdx) {
+            if (levelIdx < 0 || levelIdx >= gameLevels.length) {
+                console.error("Invalid level index:", levelIdx);
+                winMessage.textContent = '錯誤：無效的關卡索引。';
+                gameBoard.innerHTML = ''; // Clear board
+                 nextLevelButton.classList.add('hidden');
+                return;
+            }
+            currentLevelIndex = levelIdx; // Set the master index
+            const levelData = gameLevels[currentLevelIndex];
+            
+            updateDropdownsToReflectLevel(currentLevelIndex); // Sync dropdowns
+
             winMessage.textContent = '';
             winMessage.classList.remove('bg-green-200', 'text-green-700', 'p-3');
 
-            gameBoard.innerHTML = ''; // Clear all elements from previous level
-            vehicles = JSON.parse(JSON.stringify(levelData.vehicles)); // Deep copy vehicle data for current level
+            gameBoard.innerHTML = ''; 
+            vehicles = JSON.parse(JSON.stringify(levelData.vehicles)); 
 
-            // Create and position the visual exit area (green transparent square with arrow)
             const exitArea = document.createElement('div');
             exitArea.classList.add('exit-area');
             exitArea.style.height = CELL_SIZE_PX + 'px';
@@ -477,92 +601,73 @@
             
             const playerCar = vehicles.find(v => v.isPlayer);
             if (playerCar) {
-                // Position the exit area at the rightmost cell of the exit row
                 exitArea.style.left = (GRID_SIZE - 1) * CELL_SIZE_PX + 'px'; 
                 exitArea.style.width = CELL_SIZE_PX + 'px'; 
             }
             gameBoard.appendChild(exitArea);
 
-            // Create the border filler for the exit "hole"
-            // This element covers the right border segment at the exit row, making it appear open.
             const exitBorderFiller = document.createElement('div');
             exitBorderFiller.classList.add('exit-border-filler');
             exitBorderFiller.style.top = levelData.exitRow * CELL_SIZE_PX + 'px';
             exitBorderFiller.style.height = CELL_SIZE_PX + 'px';
-            // The 'right: -5px' CSS is sufficient for positioning; no need for `left` here.
             gameBoard.appendChild(exitBorderFiller);
 
-            initializeBoardState(); // Reset the board state grid
+            initializeBoardState(); 
 
-            // Create and position each vehicle on the board
             vehicles.forEach(vehicleData => {
                 const vehicleDiv = document.createElement('div');
                 vehicleDiv.id = `vehicle-${vehicleData.id}`;
                 vehicleDiv.classList.add('vehicle', vehicleData.type, `color-${vehicleData.colorName}`);
                 vehicleDiv.textContent = vehicleData.id; 
 
-                // Set vehicle dimensions based on orientation and length
                 if (vehicleData.orientation === 'horizontal') {
                     vehicleDiv.style.width = vehicleData.length * CELL_SIZE_PX + 'px';
                     vehicleDiv.style.height = CELL_SIZE_PX + 'px';
-                } else { // Vertical
+                } else { 
                     vehicleDiv.style.width = CELL_SIZE_PX + 'px';
                     vehicleDiv.style.height = vehicleData.length * CELL_SIZE_PX + 'px';
                 }
-                // Set initial position
                 vehicleDiv.style.left = vehicleData.col * CELL_SIZE_PX + 'px';
                 vehicleDiv.style.top = vehicleData.row * CELL_SIZE_PX + 'px';
 
-                vehicleDiv.vehicleData = vehicleData; // Store vehicle data on the DOM element for easy access
-                updateBoardStateForVehicle(vehicleData, vehicleData.id); // Mark cells occupied by this vehicle
+                vehicleDiv.vehicleData = vehicleData; 
+                updateBoardStateForVehicle(vehicleData, vehicleData.id); 
 
-                // Add event listeners for dragging
                 vehicleDiv.addEventListener('mousedown', startDrag);
                 vehicleDiv.addEventListener('touchstart', startDrag, { passive: false });
 
                 gameBoard.appendChild(vehicleDiv);
             });
             
-            // Hide the next level button by default; it will show only on win if applicable
             nextLevelButton.classList.add('hidden');
+            if (currentLevelIndex < gameLevels.length - 1) {
+                // Will be shown on win
+            }
         }
 
-        /**
-         * Initializes the 2D array representing the game grid, filling it with nulls.
-         */
         function initializeBoardState() {
             boardState = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
         }
 
-        /**
-         * Updates the boardState grid to reflect a vehicle's position.
-         * Marks cells with the vehicle's ID or null (to clear them).
-         * @param {object} vehicleData - The data of the vehicle to update.
-         * @param {string|null} vehicleIdOrNull - The ID of the vehicle, or null to clear cells.
-         */
         function updateBoardStateForVehicle(vehicleData, vehicleIdOrNull) {
             for (let i = 0; i < vehicleData.length; i++) {
                 if (vehicleData.orientation === 'horizontal') {
                     if(vehicleData.row >= 0 && vehicleData.row < GRID_SIZE && 
-                       vehicleData.col + i >= 0 && vehicleData.col + i < GRID_SIZE) {
+                        vehicleData.col + i >= 0 && vehicleData.col + i < GRID_SIZE) {
                         boardState[vehicleData.row][vehicleData.col + i] = vehicleIdOrNull;
                     }
-                } else { // Vertical
+                } else { 
                     if(vehicleData.row + i >= 0 && vehicleData.row + i < GRID_SIZE &&
-                       vehicleData.col >= 0 && vehicleData.col < GRID_SIZE) {
+                        vehicleData.col >= 0 && vehicleData.col < GRID_SIZE) {
                         boardState[vehicleData.row + i][vehicleData.col] = vehicleIdOrNull;
                     }
                 }
             }
         }
 
-        /**
-         * Initiates the drag operation when a vehicle is clicked or touched.
-         * @param {Event} e - The mouse or touch event.
-         */
         function startDrag(e) {
-            if (selectedVehicle) return; // Prevent dragging multiple vehicles
-            e.preventDefault(); // Prevent default browser actions (like scrolling on touch)
+            if (selectedVehicle) return; 
+            e.preventDefault(); 
 
             selectedVehicle = e.target.closest('.vehicle');
             if (!selectedVehicle) return;
@@ -570,10 +675,9 @@
             selectedVehicle.classList.add('dragging');
             
             const vehicleData = selectedVehicle.vehicleData;
-            initialGridRow = vehicleData.row; // Store initial grid position
+            initialGridRow = vehicleData.row; 
             initialGridCol = vehicleData.col;
 
-            // Clear the vehicle's current position on boardState before dragging
             updateBoardStateForVehicle(vehicleData, null); 
 
             const rect = selectedVehicle.getBoundingClientRect();
@@ -584,25 +688,18 @@
                 clientY = e.touches[0].clientY;
             } else {
                 clientX = e.clientX;
-                clientY = e.clientY; // Fix: Changed from e.clientX to e.clientY
+                clientY = e.clientY;
             }
 
-            // Calculate offset from top-left of vehicle to mouse/touch point
             offsetX = clientX - rect.left;
             offsetY = clientY - rect.top;
 
-            // Add global event listeners for dragging
             document.addEventListener('mousemove', drag);
             document.addEventListener('mouseup', endDrag);
             document.addEventListener('touchmove', drag, { passive: false });
             document.addEventListener('touchend', endDrag);
         }
 
-        /**
-         * Handles the dragging of the selected vehicle.
-         * Updates its position on the screen, snapping to grid and checking for collisions.
-         * @param {Event} e - The mouse or touch event.
-         */
         function drag(e) {
             if (!selectedVehicle) return;
             e.preventDefault();
@@ -613,7 +710,7 @@
                 clientY = e.touches[0].clientY;
             } else {
                 clientX = e.clientX;
-                clientY = e.clientY; // Fix: Changed from e.clientX to e.clientY
+                clientY = e.clientY; 
             }
 
             const boardRect = gameBoard.getBoundingClientRect();
@@ -628,13 +725,11 @@
                 let potentialCol = Math.round(newX / CELL_SIZE_PX);
                 potentialCol = Math.max(0, Math.min(potentialCol, GRID_SIZE - vehicleData.length)); 
                 
-                // Check movement towards left
                 if (potentialCol < vehicleData.col) { 
                     for (let c = vehicleData.col - 1; c >= potentialCol; c--) {
                         if (canMoveTo(vehicleData, vehicleData.row, c)) targetCol = c; else break;
                     }
                 } 
-                // Check movement towards right
                 else if (potentialCol > vehicleData.col) { 
                     for (let c = vehicleData.col + 1; c <= potentialCol; c++) {
                         if (canMoveTo(vehicleData, vehicleData.row, c)) targetCol = c; else break;
@@ -646,13 +741,11 @@
                 let potentialRow = Math.round(newY / CELL_SIZE_PX);
                 potentialRow = Math.max(0, Math.min(potentialRow, GRID_SIZE - vehicleData.length)); 
 
-                // Check movement upwards
                 if (potentialRow < vehicleData.row) { 
                     for (let r = vehicleData.row - 1; r >= potentialRow; r--) {
                         if (canMoveTo(vehicleData, r, vehicleData.col)) targetRow = r; else break;
                     }
                 } 
-                // Check movement downwards
                 else if (potentialRow > vehicleData.row) { 
                     for (let r = vehicleData.row + 1; r <= potentialRow; r++) {
                         if (canMoveTo(vehicleData, r, vehicleData.col)) targetRow = r; else break;
@@ -662,22 +755,13 @@
             }
         }
 
-        /**
-         * Checks if a vehicle can move to a target grid position without collisions or going out of bounds.
-         * @param {object} vehicleData - The data of the vehicle attempting to move.
-         * @param {number} targetRow - The target row for the vehicle's top-left corner.
-         * @param {number} targetCol - The target column for the vehicle's top-left corner.
-         * @returns {boolean} True if the move is valid, false otherwise.
-         */
         function canMoveTo(vehicleData, targetRow, targetCol) {
-            // Check if target position is within board boundaries for the entire vehicle length
             if (vehicleData.orientation === 'horizontal') {
                 if (targetCol < 0 || targetCol + vehicleData.length > GRID_SIZE) return false;
-            } else { // Vertical
+            } else { 
                 if (targetRow < 0 || targetRow + vehicleData.length > GRID_SIZE) return false;
             }
 
-            // Check for collisions with other vehicles
             for (let i = 0; i < vehicleData.length; i++) {
                 let r = targetRow, c = targetCol;
                 if (vehicleData.orientation === 'horizontal') {
@@ -685,12 +769,8 @@
                 } else {
                     r += i;
                 }
-                // Ensure the cell is within bounds before checking boardState
-                // This check is mostly redundant if the initial boundary check is correct,
-                // but acts as a safeguard.
                 if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) continue; 
                 
-                // If the cell is occupied by another vehicle (not the current one), it's a collision
                 if (boardState[r][c] !== null && boardState[r][c] !== vehicleData.id) { 
                     return false;
                 }
@@ -698,53 +778,39 @@
             return true;
         }
 
-        /**
-         * Ends the drag operation, snaps the vehicle to the nearest valid grid position,
-         * updates the board state, and checks for win condition.
-         * @param {Event} e - The mouse or touch event.
-         */
         function endDrag(e) {
             if (!selectedVehicle) return;
 
             const vehicleData = selectedVehicle.vehicleData;
             
-            // Calculate final grid position based on snapped pixel position
             let finalCol = Math.round(selectedVehicle.offsetLeft / CELL_SIZE_PX);
             let finalRow = Math.round(selectedVehicle.offsetTop / CELL_SIZE_PX);
 
-            // Clamp positions to valid grid range, keeping fixed dimension
             if (vehicleData.orientation === 'horizontal') {
                 finalCol = Math.max(0, Math.min(finalCol, GRID_SIZE - vehicleData.length));
-                finalRow = vehicleData.row; // Row does not change for horizontal vehicles
-            } else { // Vertical
+                finalRow = vehicleData.row; 
+            } else { 
                 finalRow = Math.max(0, Math.min(finalRow, GRID_SIZE - vehicleData.length));
-                finalCol = vehicleData.col; // Column does not change for vertical vehicles
+                finalCol = vehicleData.col; 
             }
             
-            // Validate the final snapped position before updating vehicle data
             if (canMoveTo(vehicleData, finalRow, finalCol)) {
                 vehicleData.row = finalRow;
                 vehicleData.col = finalCol;
             } else {
-                // If the final snapped position is invalid (e.g., due to quick drag past obstacle),
-                // revert the vehicle to its initial position before drag started.
                 console.warn("Invalid drop position, reverting vehicle to start of drag.");
                 vehicleData.row = initialGridRow;
                 vehicleData.col = initialGridCol;
             }
 
-            // Apply the final snapped position to the vehicle's CSS
             selectedVehicle.style.left = vehicleData.col * CELL_SIZE_PX + 'px';
             selectedVehicle.style.top = vehicleData.row * CELL_SIZE_PX + 'px';
             
-            // Update the boardState with the vehicle's new valid position
             updateBoardStateForVehicle(vehicleData, vehicleData.id);
 
-            // Clean up dragging state
             selectedVehicle.classList.remove('dragging');
             selectedVehicle = null;
 
-            // Remove global event listeners
             document.removeEventListener('mousemove', drag);
             document.removeEventListener('mouseup', endDrag);
             document.removeEventListener('touchmove', drag);
@@ -753,16 +819,11 @@
             checkWinCondition();
         }
 
-        /**
-         * Checks if the win condition (red car X at the exit) has been met.
-         * Displays a win message and shows the "Next Level" button if applicable.
-         */
         function checkWinCondition() {
             const playerVehicle = vehicles.find(v => v.isPlayer);
             if (!playerVehicle) return;
 
             const levelData = gameLevels[currentLevelIndex];
-            // Check if the player car (X) is at the exit row and its rightmost part is at the board's edge
             if (playerVehicle.orientation === 'horizontal' &&
                 playerVehicle.row === levelData.exitRow &&
                 playerVehicle.col + playerVehicle.length === GRID_SIZE) { 
@@ -770,21 +831,17 @@
                 winMessage.textContent = '恭喜！你贏了！';
                 winMessage.classList.add('bg-green-200', 'text-green-700', 'p-3');
                 
-                // Show next level button if there are more levels available
                 if (currentLevelIndex < gameLevels.length - 1) {
                     nextLevelButton.classList.remove('hidden');
                 } else {
-                    nextLevelButton.classList.add('hidden'); // No more levels to play
+                    nextLevelButton.classList.add('hidden'); 
+                    winMessage.textContent += ' 已完成所有關卡！';
                 }
             }
         }
         
-        /**
-         * Handles window resize events to recalculate cell size and re-render the level.
-         */
         function handleResize() {
             calculateCellSize();
-            // Re-setup the current level to correctly scale vehicles and position the exit filler
             setupLevel(currentLevelIndex); 
         }
 
@@ -797,13 +854,45 @@
             }
         });
         
-        levelSelect.addEventListener('change', (e) => {
-            setupLevel(parseInt(e.target.value)); // Convert the string value from dropdown to integer
+        difficultySelect.addEventListener('change', (e) => {
+            const selectedDifficultyKey = e.target.value;
+            // Populate specific level select for the new difficulty,
+            // and try to select the first level of that difficulty.
+            populateSpecificLevelSelect(selectedDifficultyKey); 
+            
+            if (specificLevelSelect.options.length > 0 && specificLevelSelect.value) {
+                const firstLevelNumInDifficulty = parseInt(specificLevelSelect.value);
+                const levelIndexToLoad = gameLevels.findIndex(lvl => lvl.levelNumber === firstLevelNumInDifficulty);
+
+                if (levelIndexToLoad !== -1) {
+                    setupLevel(levelIndexToLoad);
+                } else {
+                    console.warn(`Level ${firstLevelNumInDifficulty} not found in gameLevels array.`);
+                    gameBoard.innerHTML = '<p>此難易度尚無關卡。</p>';
+                    winMessage.textContent = '';
+                    nextLevelButton.classList.add('hidden');
+                }
+            } else {
+                 gameBoard.innerHTML = '<p>此難易度尚無關卡。</p>';
+                 winMessage.textContent = '';
+                 nextLevelButton.classList.add('hidden');
+            }
+        });
+
+        specificLevelSelect.addEventListener('change', (e) => {
+            const selectedLevelNum = parseInt(e.target.value);
+            // Find the actual index in gameLevels array by levelNumber
+            const levelIndexToLoad = gameLevels.findIndex(lvl => lvl.levelNumber === selectedLevelNum);
+
+            if (levelIndexToLoad !== -1) {
+                setupLevel(levelIndexToLoad);
+            } else {
+                 console.error(`Selected level number ${selectedLevelNum} not found in gameLevels.`);
+            }
         });
         
         window.addEventListener('resize', handleResize);
 
-        // --- Modal Event Listeners ---
         showInstructionsButton.addEventListener('click', () => {
             instructionsModal.classList.add('show');
         });
@@ -812,7 +901,6 @@
             instructionsModal.classList.remove('show');
         });
 
-        // Close modal if clicking outside the content
         instructionsModal.addEventListener('click', (e) => {
             if (e.target === instructionsModal) {
                 instructionsModal.classList.remove('show');
@@ -820,9 +908,45 @@
         });
 
         // --- Initial Game Setup ---
-        calculateCellSize(); // Determine initial cell size
-        populateLevelSelect(); // Fill the level selection dropdown
-        setupLevel(0); // Load the first level when the page loads
+        calculateCellSize(); 
+        populateDifficultySelect(); 
+
+        // Initialize with the first level of the first difficulty
+        if (gameLevels.length > 0) {
+            const firstDifficultyKey = Object.keys(difficulties)[0];
+            difficultySelect.value = firstDifficultyKey; // Set difficulty dropdown
+
+            // Populate specific levels for the first difficulty, trying to select its startLevel
+            populateSpecificLevelSelect(firstDifficultyKey, difficulties[firstDifficultyKey].startLevel);
+            
+            let initialLevelToLoadIndex = 0; // Default to first level in array
+            if (specificLevelSelect.value) { // If specific select got populated and has a value
+                 const firstSelectedLevelNum = parseInt(specificLevelSelect.value);
+                 const foundIndex = gameLevels.findIndex(lvl => lvl.levelNumber === firstSelectedLevelNum);
+                 if (foundIndex !== -1) {
+                    initialLevelToLoadIndex = foundIndex;
+                 }
+            }
+            
+            if (initialLevelToLoadIndex < gameLevels.length) {
+                 setupLevel(initialLevelToLoadIndex);
+            } else if (gameLevels.length > 0) { // Fallback if initial logic somehow fails
+                 setupLevel(0);
+            } else {
+                 gameBoard.innerHTML = "<p>沒有定義任何關卡。</p>";
+                 winMessage.textContent = "請先定義遊戲關卡。";
+                 difficultySelect.disabled = true;
+                 specificLevelSelect.disabled = true;
+            }
+
+        } else {
+            gameBoard.innerHTML = "<p>沒有定義任何關卡。</p>";
+            winMessage.textContent = "請先定義遊戲關卡。";
+            difficultySelect.innerHTML = '<option>無難易度</option>';
+            specificLevelSelect.innerHTML = '<option>無關卡</option>';
+            difficultySelect.disabled = true;
+            specificLevelSelect.disabled = true;
+        }
     </script>
 </body>
 </html>
