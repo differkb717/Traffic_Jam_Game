@@ -176,21 +176,24 @@
         <h1 class="text-3xl font-bold text-gray-700">Traffic Jam 遊戲</h1>
         <p class="text-gray-600">將紅色車 (X) 移到出口！</p>
         
-        <div class="mt-3 flex flex-col items-center sm:flex-row sm:justify-center sm:items-center sm:space-x-2 mb-2">
-            <label for="difficulty-select" class="text-lg mr-1 sm:mr-2">難易度:</label>
-            <select id="difficulty-select" class="p-1 border border-gray-300 rounded-md mb-2 sm:mb-0 sm:mr-3 text-base">
-                </select>
-        
-            <label for="specific-level-select" class="text-lg mr-1 sm:mr-2">選擇關卡:</label>
-            <select id="specific-level-select" class="p-1 border border-gray-300 rounded-md text-base">
-                </select>
+    <div class="mt-3 flex flex-row flex-wrap justify-center items-center gap-x-3 gap-y-2 mb-3">
+            <div class="flex items-center">
+                <label for="difficulty-select" class="text-lg mr-1 whitespace-nowrap">難易度:</label>
+                <select id="difficulty-select" class="p-1 border border-gray-300 rounded-md text-base" style="min-width: 100px;">
+                    </select>
+            </div>
+
+            <div class="flex items-center">
+                <label for="specific-level-select" class="text-lg mr-1 whitespace-nowrap">選擇關卡:</label>
+                <select id="specific-level-select" class="p-1 border border-gray-300 rounded-md text-base" style="min-width: 100px;">
+                    </select>
+            </div>
         </div>
-    </div>
 
     <div id="game-board" class="game-board">
     </div>
 
-    <div class="mt-6 flex space-x-4">
+    <div class="mt-6 flex justify-center space-x-4">
         <button id="reset-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
             重置關卡
         </button>
