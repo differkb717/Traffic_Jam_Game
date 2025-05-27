@@ -535,6 +535,24 @@
                      
                 ]
             },
+            { // Level 16 
+                levelNumber: 16,// 註：所有 row (行) 和 col (列) 均為 0-indexed (即從0開始計算)。
+                exitRow: 2, // 紅色車 X 的目標出口行 (0-indexed)
+                vehicles: [
+                    // 每一輛車的 (row, col) 代表其左上角在6x6網格中的位置。
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 3, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'horizontal', row: 0, col: 0},  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'horizontal', row: 0, col: 2 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'vertical', row: 0, col: 4 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 1, col: 0 },
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'horizontal', row: 1, col: 2 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'vertical', row: 2, col: 1 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'horizontal', row: 5, col: 0 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'vertical', row: 0, col: 5 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 2, col: 2 }, 
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'horizontal', row: 3, col: 3},                                       
+                ]
+            },
             // You can add more levels here!
             // ... (Levels 13-20 for INTERMEDIATE)
             // ... (Levels 21-30 for ADVANCED)
