@@ -218,6 +218,20 @@
         </div>
     </div>
 
+    <div id="win-message-modal" class="modal-overlay">
+    <div class="modal-content text-center p-6"> <h2 id="win-modal-title" class="text-2xl font-bold mb-4 text-green-700">恭喜！</h2>
+        <p id="win-modal-text" class="text-lg mb-6">你贏了！</p>
+        <div class="flex flex-col sm:flex-row justify-center gap-3">
+            <button id="win-modal-next-level-button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition duration-150 ease-in-out hidden text-base">
+                下一關
+            </button>
+            <button id="win-modal-close-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-base">
+                確定
+            </button>
+        </div>
+    </div>
+    </div>
+
     <script>
         const gameBoard = document.getElementById('game-board');
         const resetButton = document.getElementById('reset-button');
@@ -230,6 +244,14 @@
         const showInstructionsButton = document.getElementById('show-instructions-button');
         const instructionsModal = document.getElementById('instructions-modal');
         const closeInstructionsButton = document.getElementById('close-instructions-button');
+    
+       // New modal elements for win message
+        const winMessageModal = document.getElementById('win-message-modal');
+        const winModalTitle = document.getElementById('win-modal-title'); // If needed for dynamic title
+        const winModalText = document.getElementById('win-modal-text');
+        const winModalCloseButton = document.getElementById('win-modal-close-button');
+        const winModalNextLevelButton = document.getElementById('win-modal-next-level-button');
+
 
         const GRID_SIZE = 6;
         let CELL_SIZE_PX; 
@@ -500,7 +522,10 @@
         function calculateCellSize() {
             CELL_SIZE_PX = gameBoard.clientWidth / GRID_SIZE;
         }
-        
+        function isMobile() {
+            return window.innerWidth < 768; // Adjust breakpoint as needed (e.g., 640 for 'sm')
+        }
+
         function populateDifficultySelect() {
             difficultySelect.innerHTML = '';
             for (const key in difficulties) {
@@ -581,6 +606,9 @@
         function setupLevel(levelIdx) {
             if (levelIdx < 0 || levelIdx >= gameLevels.length) {
                 console.error("Invalid level index:", levelIdx);
+                winMessageModal.classList.remove('show'); // Ensure win modal is hidden
+                winMessage.textContent = '';
+                winMessage.classList.remove('bg-green-200', 'text-green-700', 'p-3');
                 winMessage.textContent = '錯誤：無效的關卡索引。';
                 gameBoard.innerHTML = ''; // Clear board
                  nextLevelButton.classList.add('hidden');
@@ -831,14 +859,34 @@
                 playerVehicle.row === levelData.exitRow &&
                 playerVehicle.col + playerVehicle.length === GRID_SIZE) { 
                 
-                winMessage.textContent = '恭喜！你贏了！';
-                winMessage.classList.add('bg-green-200', 'text-green-700', 'p-3');
-                
-                if (currentLevelIndex < gameLevels.length - 1) {
-                    nextLevelButton.classList.remove('hidden');
-                } else {
+                const isWinOnMobile = isMobile();
+                const hasNextLevel = currentLevelIndex < gameLevels.length - 1;
+
+                if (isWinOnMobile) {
+                    let modalMessage = '你贏了！';
+                    if (!hasNextLevel) {
+                        modalMessage += ' 已完成所有關卡！';
+                        winModalNextLevelButton.classList.add('hidden');
+                    } else {
+                        winModalNextLevelButton.classList.remove('hidden');
+                    }
+                    winModalText.textContent = modalMessage;
+                    winMessageModal.classList.add('show');
+
+                    // Hide the original bottom message and next level button
+                    winMessage.textContent = '';
+                    winMessage.classList.remove('bg-green-200', 'text-green-700', 'p-3');
                     nextLevelButton.classList.add('hidden'); 
-                    winMessage.textContent += ' 已完成所有關卡！';
+                } else { // Desktop behavior
+                    winMessage.textContent = '恭喜！你贏了！';
+                    winMessage.classList.add('bg-green-200', 'text-green-700', 'p-3');
+                    
+                    if (hasNextLevel) {
+                        nextLevelButton.classList.remove('hidden');
+                    } else {
+                        nextLevelButton.classList.add('hidden');
+                        winMessage.textContent += ' 已完成所有關卡！';
+                    }
                 }
             }
         }
@@ -895,6 +943,24 @@
         });
         
         window.addEventListener('resize', handleResize);
+
+        // --- Modal Event Listeners ---
+        showInstructionsButton.addEventListener('click', () => { /* ... */ });
+        closeInstructionsButton.addEventListener('click', () => { /* ... */ });
+        instructionsModal.addEventListener('click', (e) => { /* ... */ });
+
+        // Win Message Modal Button Listeners
+        winModalCloseButton.addEventListener('click', () => {
+            winMessageModal.classList.remove('show');
+        });
+
+        winModalNextLevelButton.addEventListener('click', () => {
+            winMessageModal.classList.remove('show'); // Close modal first
+            if (currentLevelIndex < gameLevels.length - 1) {
+                setupLevel(currentLevelIndex + 1);
+            }
+        });
+
 
         showInstructionsButton.addEventListener('click', () => {
             instructionsModal.classList.add('show');
