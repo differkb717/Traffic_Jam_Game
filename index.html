@@ -95,23 +95,23 @@
         .car { /* 2 units long */ }
         .truck { /* 3 units long */ }
 
-        .color-X { background-color: #FF0000; } 
-        .color-A { background-color: #32CD32; } 
-        .color-B { background-color: #FFD700; } 
-        .color-C { background-color: #1E90FF; } 
-        .color-D { background-color: #FFB6C1; } 
-        .color-E { background-color: #9932CC; } 
-        .color-F { background-color: #228B22; } 
-        .color-G { background-color: #778899; } 
+        .color-X { background-color: #FF0000; color: #333; text-shadow: none;} 
+        .color-A { background-color: #32CD32; color: #333; text-shadow: none;} 
+        .color-B { background-color: #FFD700; color: #333; text-shadow: none;} 
+        .color-C { background-color: #1E90FF; color: #333; text-shadow: none;} 
+        .color-D { background-color: #FFB6C1; color: #333; text-shadow: none;} 
+        .color-E { background-color: #9932CC; color: #333; text-shadow: none;} 
+        .color-F { background-color: #228B22; color: #333; text-shadow: none;} 
+        .color-G { background-color: #778899; color: #333; text-shadow: none;} 
         .color-H { background-color: #F5F5DC; color: #333; text-shadow: none; } 
         .color-I { background-color: #FFFF00; color: #333; text-shadow: none; } 
-        .color-J { background-color: #8B4513; } 
-        .color-K { background-color: #808000; } 
+        .color-J { background-color: #8B4513; color: #333; text-shadow: none;} 
+        .color-K { background-color: #808000; color: #333; text-shadow: none;} 
 
-        .color-O { background-color: #FFD700; color: #333; text-shadow: none; } 
-        .color-P { background-color: #9932CC; } 
-        .color-Q { background-color: #1E90FF; } 
-        .color-R { background-color: #228B22; } 
+        .color-O { background-color: #FFD700; color: #333; text-shadow: none;} 
+        .color-P { background-color: #9932CC; color: #333; text-shadow: none;} 
+        .color-Q { background-color: #1E90FF; color: #333; text-shadow: none;} 
+        .color-R { background-color: #228B22; color: #333; text-shadow: none;} 
 
         .modal-overlay {
             position: fixed;
@@ -669,6 +669,309 @@
                   { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'horizontal', row: 5, col: 2 }
                  ]
             },
+            { // Level 24 
+                levelNumber: 24,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 2, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'vertical', row: 0, col: 2 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'horizontal', row: 0, col: 3 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'vertical', row: 1, col: 1 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 2, col: 0 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'vertical', row: 2, col: 4 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'horizontal', row: 3, col: 1 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'vertical', row: 4, col: 4 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'horizontal', row: 4, col: 0 },
+                    { id: 'H', type: 'car', colorName: 'H', length: 2, orientation: 'horizontal', row: 5, col: 0 }                                       
+                ]
+            },
+            { // Level 25 
+                levelNumber: 25,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 1, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'horizontal', row: 0, col: 0 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 0, col: 2 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'horizontal', row: 0, col: 4 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'horizontal', row: 1, col: 0 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'vertical', row: 2, col: 4 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'vertical', row: 4, col: 1 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'vertical', row: 4, col: 3 },
+                    { id: 'H', type: 'car', colorName: 'H', length: 2, orientation: 'horizontal', row: 4, col: 4 },
+                    { id: 'I', type: 'car', colorName: 'I', length: 2, orientation: 'horizontal', row: 5, col: 4 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'vertical', row: 1, col: 5 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 2, col: 0 },
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'horizontal', row: 3, col: 1 }                                       
+                ]
+            },
+            { // Level 26 
+                levelNumber: 26,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 1, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'vertical', row: 0, col: 1 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 1, col: 0 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'vertical', row: 1, col: 3 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 2, col: 5 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'vertical', row: 3, col: 0 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'vertical', row: 4, col: 2 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'vertical', row: 4, col: 5 },
+                    { id: 'H', type: 'car', colorName: 'H', length: 2, orientation: 'horizontal', row: 5, col: 3 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'horizontal', row: 0, col: 3 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 1, col: 4 },
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'horizontal', row: 3, col: 1 }                                       
+                ]
+            },
+            { // Level 27 
+                levelNumber: 27,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'vertical', row: 0, col: 0 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'horizontal', row: 0, col: 1 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'horizontal', row: 1, col: 1 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 2, col: 2 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'horizontal', row: 3, col: 3 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'vertical', row: 4, col: 2 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'vertical', row: 0, col: 3 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 2, col: 5 },
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'horizontal', row: 5, col: 3 }                                      
+                ]
+            },
+            { // Level 28 
+                levelNumber: 28,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'vertical', row: 0, col: 3 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'horizontal', row: 1, col: 4 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'vertical', row: 3, col: 0 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 3, col: 1 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'horizontal', row: 3, col: 3 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'horizontal', row: 5, col: 0 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'horizontal', row: 5, col: 2 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'horizontal', row: 0, col: 0 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 1, col: 2 },
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'vertical', row: 3, col: 5 },
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'horizontal', row: 4, col: 2 } 
+                ]
+            },
+            { // Level 29 
+                levelNumber: 29,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'vertical', row: 1, col: 2 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 2, col: 5 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'vertical', row: 3, col: 0 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'horizontal', row: 3, col: 1 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'horizontal', row: 3, col: 3 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'horizontal', row: 4, col: 1 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'vertical', row: 4, col: 3 },
+                    { id: 'H', type: 'car', colorName: 'H', length: 2, orientation: 'vertical', row: 4, col: 5 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'horizontal', row: 0, col: 0 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 0, col: 4 },
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'horizontal', row: 5, col: 0 }                                      
+                ]
+            },
+            { // Level 30 
+                levelNumber: 30,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 1, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'vertical', row: 0, col: 2 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 1, col: 3 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'horizontal', row: 3, col: 0 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'horizontal', row: 3, col: 2 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'horizontal', row: 5, col: 0 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'horizontal', row: 5, col: 2 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'vertical', row: 0, col: 0 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'horizontal', row: 0, col: 3 },
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'vertical', row: 3, col: 5 }                                       
+                ]
+            },
+            { // Level 31 
+                levelNumber: 31,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 1, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'horizontal', row: 0, col: 0 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 1, col: 3 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'horizontal', row: 1, col: 4 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 2, col: 0 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'horizontal', row: 3, col: 3 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'horizontal', row: 4, col: 0 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'horizontal', row: 0, col: 3 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 2, col: 5 },
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'vertical', row: 3, col: 2 },
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'horizontal', row: 5, col: 3 }                                       
+                ]
+            },
+            { // Level 32 
+                levelNumber: 32,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'horizontal', row: 0, col: 0 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 0, col: 3 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'horizontal', row: 0, col: 4 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 3, col: 0 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'horizontal', row: 3, col: 1 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'horizontal', row: 3, col: 3 },
+                    { id: 'H', type: 'car', colorName: 'H', length: 2, orientation: 'horizontal', row: 5, col: 0 },
+                    { id: 'K', type: 'car', colorName: 'K', length: 2, orientation: 'vertical', row: 4, col: 3 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'vertical', row: 0, col: 2 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 3, col: 5 }                                   
+                ]
+            },
+            { // Level 33 
+                levelNumber: 33,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'vertical', row: 0, col: 1 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'horizontal', row: 0, col: 4 },  
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'horizontal', row: 3, col: 1 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'horizontal', row: 3, col: 3 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'horizontal', row: 4, col: 1 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'vertical', row: 4, col: 3 },
+                    { id: 'H', type: 'car', colorName: 'H', length: 2, orientation: 'vertical', row: 4, col: 4 },
+                    { id: 'I', type: 'car', colorName: 'I', length: 2, orientation: 'vertical', row: 3, col: 0 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 3, col: 5 },
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'horizontal', row: 5, col: 0 },
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'vertical', row: 0, col: 2 }                                     
+                ]
+            },
+            { // Level 34 
+                levelNumber: 34,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'vertical', row: 0, col: 0 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 1, col: 3 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'vertical', row: 2, col: 4 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 3, col: 3 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'vertical', row: 4, col: 2 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'horizontal', row: 4, col: 4 },
+                    { id: 'H', type: 'car', colorName: 'H', length: 2, orientation: 'horizontal', row: 5, col: 3 },
+                    { id: 'I', type: 'car', colorName: 'I', length: 2, orientation: 'horizontal', row: 5, col: 0 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 1, col: 5 },
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'horizontal', row: 3, col: 0 },
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'horizontal', row: 0, col: 3 }                                      
+                ]
+            },
+            { // Level 35 
+                levelNumber: 35,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'horizontal', row: 0, col: 3 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 1, col: 3 },  
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'horizontal', row: 4, col: 1 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'vertical', row: 4, col: 3 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'vertical', row: 4, col: 4 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'horizontal', row: 5, col: 0 },
+                    { id: 'K', type: 'car', colorName: 'K', length: 2, orientation: 'vertical', row: 3, col: 0 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'vertical', row: 0, col: 2 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 0, col: 5 },
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'horizontal', row: 3, col: 1 }                                     
+                ]
+            },
+            { // Level 36 
+                levelNumber: 36,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 2, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'horizontal', row: 0, col: 4 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 1, col: 1 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'horizontal', row: 1, col: 2 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 3, col: 3 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'vertical', row: 4, col: 2 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'horizontal', row: 4, col: 4 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'horizontal', row: 5, col: 0 }, 
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 2 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'vertical', row: 0, col: 0 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'horizontal', row: 0, col: 1 }, 
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'vertical', row: 1, col: 5 },
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'horizontal', row: 3, col: 0 }                                        
+                ]
+            },
+            { // Level 37 
+                levelNumber: 37,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 1, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'horizontal', row: 0, col: 0 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 0, col: 2 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'horizontal', row: 0, col: 4 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'horizontal', row: 1, col: 0 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'vertical', row: 4, col: 3 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'horizontal', row: 4, col: 4 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'horizontal', row: 5, col: 0 },
+                    { id: 'H', type: 'car', colorName: 'H', length: 2, orientation: 'horizontal', row: 5, col: 4 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'vertical', row: 1, col: 4 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 1, col: 5 }, 
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'vertical', row: 2, col: 0 }, 
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'horizontal', row: 3, col: 1 }                                      
+                ]
+            },
+            { // Level 38 
+                levelNumber: 38,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'vertical', row: 0, col: 0 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'horizontal', row: 1, col: 1 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'vertical', row: 1, col: 3 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 2, col: 2 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'horizontal', row: 3, col: 3 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'vertical', row: 4, col: 2 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'horizontal', row: 4, col: 3 },
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'horizontal', row: 0, col: 3 },
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'horizontal', row: 5, col: 3 },
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'vertical', row: 2, col: 5 }                                        
+                ]
+            },
+            { // Level 39 
+                levelNumber: 39,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'vertical', row: 0, col: 2 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 1, col: 3 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'vertical', row: 2, col: 2 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'horizontal', row: 3, col: 0 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'horizontal', row: 3, col: 3 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'vertical', row: 4, col: 0 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'vertical', row: 4, col: 1 },
+                    { id: 'H', type: 'car', colorName: 'H', length: 2, orientation: 'horizontal', row: 4, col: 2 },
+                    { id: 'I', type: 'car', colorName: 'I', length: 2, orientation: 'horizontal', row: 5, col: 2 },
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 0 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'horizontal', row: 0, col: 3 },
+                    { id: 'R', type: 'truck', colorName: 'R', length: 3, orientation: 'vertical', row: 2, col: 5 }                                       
+                ]
+            },
+            { // Level 40 
+                levelNumber: 40,
+                exitRow: 2, 
+                vehicles: [
+                    { id: 'X', type: 'car', colorName: 'X', length: 2, orientation: 'horizontal', row: 2, col: 3, isPlayer: true }, 
+                    { id: 'A', type: 'car', colorName: 'A', length: 2, orientation: 'horizontal', row: 0, col: 1 },  
+                    { id: 'B', type: 'car', colorName: 'B', length: 2, orientation: 'vertical', row: 0, col: 4 },  
+                    { id: 'C', type: 'car', colorName: 'C', length: 2, orientation: 'vertical', row: 1, col: 1 }, 
+                    { id: 'D', type: 'car', colorName: 'D', length: 2, orientation: 'vertical', row: 1, col: 2 }, 
+                    { id: 'E', type: 'car', colorName: 'E', length: 2, orientation: 'vertical', row: 3, col: 3 },
+                    { id: 'F', type: 'car', colorName: 'F', length: 2, orientation: 'vertical', row: 4, col: 2 },
+                    { id: 'G', type: 'car', colorName: 'G', length: 2, orientation: 'horizontal', row: 4, col: 4 },
+                    { id: 'H', type: 'car', colorName: 'H', length: 2, orientation: 'horizontal', row: 5, col: 0 },
+                    { id: 'I', type: 'car', colorName: 'I', length: 2, orientation: 'horizontal', row: 5, col: 3 },
+                    { id: 'O', type: 'truck', colorName: 'O', length: 3, orientation: 'vertical', row: 0, col: 0 },
+                    { id: 'P', type: 'truck', colorName: 'P', length: 3, orientation: 'vertical', row: 1, col: 5 },
+                    { id: 'Q', type: 'truck', colorName: 'Q', length: 3, orientation: 'horizontal', row: 3, col: 0 }                                       
+                ]
+            }
+        
             // You can add more levels here!
             // ... (Levels 13-20 for INTERMEDIATE)
             // ... (Levels 21-30 for ADVANCED)
