@@ -2082,78 +2082,94 @@
         }
 
         function startDrag(e) {
-    if (selectedVehicle || isPlayingSolution) return; 
-    e.preventDefault(); 
+            if (selectedVehicle) return; 
+            e.preventDefault(); 
 
-    selectedVehicle = e.target.closest('.vehicle');
-    if (!selectedVehicle) return;
+            selectedVehicle = e.target.closest('.vehicle');
+            if (!selectedVehicle) return;
 
-    selectedVehicle.classList.add('dragging');
-    
-    const vehicleData = selectedVehicle.vehicleData;
-    initialGridRow = vehicleData.row; 
-    initialGridCol = vehicleData.col;
+            selectedVehicle.classList.add('dragging');
+            
+            const vehicleData = selectedVehicle.vehicleData;
+            initialGridRow = vehicleData.row; 
+            initialGridCol = vehicleData.col;
 
-    // --- 新增：預算邊界邏輯 ---
-    // 先把自己從地圖上移除，才能計算「前方是否有空位」
-    updateBoardStateForVehicle(vehicleData, null); 
+            updateBoardStateForVehicle(vehicleData, null); 
 
-    let minCol = vehicleData.col, maxCol = vehicleData.col;
-    let minRow = vehicleData.row, maxRow = vehicleData.row;
+            const rect = selectedVehicle.getBoundingClientRect();
+            
+            let clientX, clientY;
+            if (e.type === 'touchstart') {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
 
-    // 計算水平或垂直方向最多能滑到哪
-    if (vehicleData.orientation === 'horizontal') {
-        while (minCol > 0 && canMoveTo(vehicleData, vehicleData.row, minCol - 1)) minCol--;
-        while (maxCol + vehicleData.length < GRID_SIZE && canMoveTo(vehicleData, vehicleData.row, maxCol + 1)) maxCol++;
-    } else {
-        while (minRow > 0 && canMoveTo(vehicleData, minRow - 1, vehicleData.col)) minRow--;
-        while (maxRow + vehicleData.length < GRID_SIZE && canMoveTo(vehicleData, maxRow + 1, vehicleData.col)) maxRow++;
-    }
+            offsetX = clientX - rect.left;
+            offsetY = clientY - rect.top;
 
-    // 儲存像素等級的邊界限制
-    dragBounds = {
-        minX: minCol * CELL_SIZE_PX,
-        maxX: maxCol * CELL_SIZE_PX,
-        minY: minRow * CELL_SIZE_PX,
-        maxY: maxRow * CELL_SIZE_PX
-    };
-    // ------------------------
-
-    const rect = selectedVehicle.getBoundingClientRect();
-    let clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-    let clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-
-    offsetX = clientX - rect.left;
-    offsetY = clientY - rect.top;
-
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', endDrag);
-    document.addEventListener('touchmove', drag, { passive: false });
-    document.addEventListener('touchend', endDrag);
-}
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchmove', drag, { passive: false });
+            document.addEventListener('touchend', endDrag);
+        }
 
         function drag(e) {
-    if (!selectedVehicle || !dragBounds) return;
-    e.preventDefault();
+            if (!selectedVehicle) return;
+            e.preventDefault();
 
-    let clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-    let clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            let clientX, clientY;
+            if (e.type === 'touchmove') {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY; 
+            }
 
-    const boardRect = gameBoard.getBoundingClientRect();
-    let rawX = clientX - boardRect.left - offsetX;
-    let rawY = clientY - boardRect.top - offsetY;
-    
-    const vehicleData = selectedVehicle.vehicleData;
+            const boardRect = gameBoard.getBoundingClientRect();
+            let newX = clientX - boardRect.left - offsetX;
+            let newY = clientY - boardRect.top - offsetY;
+            
+            const vehicleData = selectedVehicle.vehicleData;
+            let targetCol = vehicleData.col;
+            let targetRow = vehicleData.row;
 
-    // 改用「像素位置」移動，並用 Math.max/min 限制在 dragBounds 內
-    if (vehicleData.orientation === 'horizontal') {
-        let finalX = Math.max(dragBounds.minX, Math.min(rawX, dragBounds.maxX));
-        selectedVehicle.style.left = finalX + 'px';
-    } else { 
-        let finalY = Math.max(dragBounds.minY, Math.min(rawY, dragBounds.maxY));
-        selectedVehicle.style.top = finalY + 'px';
-    }
-}
+            if (vehicleData.orientation === 'horizontal') {
+                let potentialCol = Math.round(newX / CELL_SIZE_PX);
+                potentialCol = Math.max(0, Math.min(potentialCol, GRID_SIZE - vehicleData.length)); 
+                
+                if (potentialCol < vehicleData.col) { 
+                    for (let c = vehicleData.col - 1; c >= potentialCol; c--) {
+                        if (canMoveTo(vehicleData, vehicleData.row, c)) targetCol = c; else break;
+                    }
+                } 
+                else if (potentialCol > vehicleData.col) { 
+                    for (let c = vehicleData.col + 1; c <= potentialCol; c++) {
+                        if (canMoveTo(vehicleData, vehicleData.row, c)) targetCol = c; else break;
+                    }
+                }
+                selectedVehicle.style.left = targetCol * CELL_SIZE_PX + 'px';
+
+            } else { // Vertical
+                let potentialRow = Math.round(newY / CELL_SIZE_PX);
+                potentialRow = Math.max(0, Math.min(potentialRow, GRID_SIZE - vehicleData.length)); 
+
+                if (potentialRow < vehicleData.row) { 
+                    for (let r = vehicleData.row - 1; r >= potentialRow; r--) {
+                        if (canMoveTo(vehicleData, r, vehicleData.col)) targetRow = r; else break;
+                    }
+                } 
+                else if (potentialRow > vehicleData.row) { 
+                    for (let r = vehicleData.row + 1; r <= potentialRow; r++) {
+                        if (canMoveTo(vehicleData, r, vehicleData.col)) targetRow = r; else break;
+                    }
+                }
+                selectedVehicle.style.top = targetRow * CELL_SIZE_PX + 'px';
+            }
+        }
 
         function canMoveTo(vehicleData, targetRow, targetCol) {
             if (vehicleData.orientation === 'horizontal') {
@@ -2179,40 +2195,45 @@
         }
 
         function endDrag(e) {
-    if (!selectedVehicle) return;
+            if (!selectedVehicle) return;
 
-    const vehicleData = selectedVehicle.vehicleData;
-    
-    // 取得當前 CSS 上的像素位置
-    let currentPixelX = parseFloat(selectedVehicle.style.left);
-    let currentPixelY = parseFloat(selectedVehicle.style.top);
+            const vehicleData = selectedVehicle.vehicleData;
+            
+            let finalCol = Math.round(selectedVehicle.offsetLeft / CELL_SIZE_PX);
+            let finalRow = Math.round(selectedVehicle.offsetTop / CELL_SIZE_PX);
 
-    // 將像素位置轉換回網格座標 (四捨五入)
-    let finalCol = Math.round(currentPixelX / CELL_SIZE_PX);
-    let finalRow = Math.round(currentPixelY / CELL_SIZE_PX);
+            if (vehicleData.orientation === 'horizontal') {
+                finalCol = Math.max(0, Math.min(finalCol, GRID_SIZE - vehicleData.length));
+                finalRow = vehicleData.row; 
+            } else { 
+                finalRow = Math.max(0, Math.min(finalRow, GRID_SIZE - vehicleData.length));
+                finalCol = vehicleData.col; 
+            }
+            
+            if (canMoveTo(vehicleData, finalRow, finalCol)) {
+                vehicleData.row = finalRow;
+                vehicleData.col = finalCol;
+            } else {
+                console.warn("Invalid drop position, reverting vehicle to start of drag.");
+                vehicleData.row = initialGridRow;
+                vehicleData.col = initialGridCol;
+            }
 
-    // 更新資料狀態
-    vehicleData.col = finalCol;
-    vehicleData.row = finalRow;
+            selectedVehicle.style.left = vehicleData.col * CELL_SIZE_PX + 'px';
+            selectedVehicle.style.top = vehicleData.row * CELL_SIZE_PX + 'px';
+            
+            updateBoardStateForVehicle(vehicleData, vehicleData.id);
 
-    // 視覺上「吸附」回格線
-    selectedVehicle.style.left = finalCol * CELL_SIZE_PX + 'px';
-    selectedVehicle.style.top = finalRow * CELL_SIZE_PX + 'px';
-    
-    // 將車子寫回 boardState
-    updateBoardStateForVehicle(vehicleData, vehicleData.id);
+            selectedVehicle.classList.remove('dragging');
+            selectedVehicle = null;
 
-    selectedVehicle.classList.remove('dragging');
-    selectedVehicle = null;
-    dragBounds = null;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', endDrag);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('touchend', endDrag);
 
-    document.removeEventListener('mousemove', drag);
-    document.removeEventListener('mouseup', endDrag);
-    document.removeEventListener('touchmove', drag);
-    document.removeEventListener('touchend', endDrag);
-
-    checkWinCondition();
-}
+            checkWinCondition();
+        }
 
         function checkWinCondition() {
             const playerVehicle = vehicles.find(v => v.isPlayer);
@@ -2255,43 +2276,9 @@
             }
         }
         
- 
         function handleResize() {
-    // 重新計算目前的格子像素大小
-    calculateCellSize();
-    
-    // 只更新畫面上「現有車輛」的 CSS 位置與大小，不重載資料
-    vehicles.forEach(vehicleData => {
-        const vehicleDiv = document.getElementById(`vehicle-${vehicleData.id}`);
-        if (vehicleDiv) {
-            // 根據新的 CELL_SIZE_PX 更新寬高
-            if (vehicleData.orientation === 'horizontal') {
-                vehicleDiv.style.width = vehicleData.length * CELL_SIZE_PX + 'px';
-                vehicleDiv.style.height = CELL_SIZE_PX + 'px';
-            } else {
-                vehicleDiv.style.width = CELL_SIZE_PX + 'px';
-                vehicleDiv.style.height = vehicleData.length * CELL_SIZE_PX + 'px';
-            }
-            // 根據「目前的網格座標」重新定位
-            vehicleDiv.style.left = vehicleData.col * CELL_SIZE_PX + 'px';
-            vehicleDiv.style.top = vehicleData.row * CELL_SIZE_PX + 'px';
-        }
-    });
-
-    // 更新出口標示的位置 (原本 setupLevel 做的事，現在手動更新)
-    const levelData = gameLevels[currentLevelIndex];
-    const exitArea = document.querySelector('.exit-area');
-    const exitBorderFiller = document.querySelector('.exit-border-filler');
-    if (exitArea) {
-        exitArea.style.height = CELL_SIZE_PX + 'px';
-        exitArea.style.top = levelData.exitRow * CELL_SIZE_PX + 'px';
-        exitArea.style.left = (GRID_SIZE - 1) * CELL_SIZE_PX + 'px';
-        exitArea.style.width = CELL_SIZE_PX + 'px';
-    }
-    if (exitBorderFiller) {
-        exitBorderFiller.style.top = levelData.exitRow * CELL_SIZE_PX + 'px';
-        exitBorderFiller.style.height = CELL_SIZE_PX + 'px';
-    }
+            calculateCellSize();
+            setupLevel(currentLevelIndex); 
         }
 
         // --- Event Listeners ---
@@ -2380,7 +2367,6 @@
 
         
 let isPlayingSolution = false;
-let dragBounds = null; // 用來存放當前拖曳車輛的像素移動範圍限制
 let cancelSolutionPlayback = false;
 
 const showSolutionButton = document.createElement('button');
