@@ -1989,19 +1989,6 @@
 
 
         function setupLevel(levelIdx) {
-            // 每次切換關卡都讓任何舊播放的 token 失效
-            currentPlaybackToken++;
-            isPlayingSolution = false;
-            // 清理可能殘留的拖曳狀態
-            if (selectedVehicle) {
-                selectedVehicle.classList.remove('dragging');
-                selectedVehicle = null;
-                dragBounds = null;
-                document.removeEventListener('mousemove', drag);
-                document.removeEventListener('mouseup', endDrag);
-                document.removeEventListener('touchmove', drag);
-                document.removeEventListener('touchend', endDrag);
-            }
             if (levelIdx < 0 || levelIdx >= gameLevels.length) {
                 console.error("Invalid level index:", levelIdx);
                 winMessageModal.classList.remove('show'); // Ensure win modal is hidden
@@ -2309,22 +2296,18 @@
 
         // --- Event Listeners ---
         resetButton.addEventListener('click', () => {
-            stopSolutionPlayback();   // token 立即失效，舊 async loop 自動放棄
-            setUILocked(false);       // 解鎖 UI（以防播放中點擊）
+            cancelSolutionPlayback = true;
+            isPlayingSolution = false;
             setupLevel(currentLevelIndex);
         });
 
         nextLevelButton.addEventListener('click', () => {
-            stopSolutionPlayback();
-            setUILocked(false);
             if (currentLevelIndex < gameLevels.length - 1) {
                 setupLevel(currentLevelIndex + 1);
             }
         });
         
         difficultySelect.addEventListener('change', (e) => {
-            stopSolutionPlayback();
-            setUILocked(false);
             const selectedDifficultyKey = e.target.value;
             // Populate specific level select for the new difficulty,
             // and try to select the first level of that difficulty.
@@ -2350,8 +2333,6 @@
         });
 
         specificLevelSelect.addEventListener('change', (e) => {
-            stopSolutionPlayback();
-            setUILocked(false);
             const selectedLevelNum = parseInt(e.target.value);
             // Find the actual index in gameLevels array by levelNumber
             const levelIndexToLoad = gameLevels.findIndex(lvl => lvl.levelNumber === selectedLevelNum);
@@ -2376,8 +2357,6 @@
         });
 
         winModalNextLevelButton.addEventListener('click', () => {
-            stopSolutionPlayback();
-            setUILocked(false);
             winMessageModal.classList.remove('show'); // Close modal first
             if (currentLevelIndex < gameLevels.length - 1) {
                 setupLevel(currentLevelIndex + 1);
@@ -2400,28 +2379,9 @@
         });
 
         
-// ── 解答播放狀態管理（token-based，防止靈異跳動）──────────────────────────
-// 每次新的播放或 setupLevel 都會遞增此值，
-// 讓舊的 async loop 在下一個 await 點發現 token 已失效並自動中止。
 let isPlayingSolution = false;
 let dragBounds = null; // 用來存放當前拖曳車輛的像素移動範圍限制
-let currentPlaybackToken = 0; // 播放世代 token
-
-// 停止任何正在進行的解答播放（同步，立即讓 token 失效）
-function stopSolutionPlayback() {
-    currentPlaybackToken++;          // 舊 loop 比對時會發現不匹配，自動放棄
-    isPlayingSolution = false;
-    // 若有拖曳中的車子也一併清理
-    if (selectedVehicle) {
-        selectedVehicle.classList.remove('dragging');
-        selectedVehicle = null;
-        dragBounds = null;
-        document.removeEventListener('mousemove', drag);
-        document.removeEventListener('mouseup', endDrag);
-        document.removeEventListener('touchmove', drag);
-        document.removeEventListener('touchend', endDrag);
-    }
-}
+let cancelSolutionPlayback = false;
 
 const showSolutionButton = document.createElement('button');
 showSolutionButton.id = 'show-solution-button';
@@ -2436,57 +2396,34 @@ showSolutionButton.addEventListener('click', async () => {
         alert("此關尚無解答");
         return;
     }
-
-    // 先重置關卡，同時讓任何舊播放失效
-    stopSolutionPlayback();
-    setupLevel(currentLevelIndex);
-
-    // 取得本次播放專屬的 token（setupLevel 已讓前一個失效並遞增）
-    const myToken = currentPlaybackToken;
-
+    setupLevel(currentLevelIndex);  
     isPlayingSolution = true;
-    setUILocked(true);
+    cancelSolutionPlayback = false;
     disableDragging();
-
     for (const step of level.solutionSteps) {
-        // 每步開始前先確認 token 仍有效
-        if (currentPlaybackToken !== myToken) break;
-        await playSingleStep(step, myToken);
-        // 步驟間等待前再次確認
-        if (currentPlaybackToken !== myToken) break;
-        await new Promise(resolve => setTimeout(resolve, 550));
+        if (cancelSolutionPlayback) break;
+        await playSingleStep(step);
+        await new Promise(resolve => setTimeout(resolve, 3000));
     }
-
-    // 只有本次 token 仍有效時才恢復 UI
-    if (currentPlaybackToken === myToken) {
-        enableDragging();
-        isPlayingSolution = false;
-        setUILocked(false);
-    }
+    enableDragging();
+    isPlayingSolution = false;
 });
 
-// playSingleStep 接受 token，執行前後都檢查是否已被取消
-async function playSingleStep(step, token) {
-    if (currentPlaybackToken !== token) return;
-
+async function playSingleStep(step) {
     const { id, direction, steps } = step;
     const vehicle = vehicles.find(v => v.id === id);
     const vehicleDiv = document.getElementById(`vehicle-${id}`);
-    // 若 DOM 元素不存在（表示 setupLevel 已換掉畫面），直接放棄
-    if (!vehicle || !vehicleDiv || !gameBoard.contains(vehicleDiv)) return;
+    if (!vehicle || !vehicleDiv) return;
 
     let newRow = vehicle.row;
     let newCol = vehicle.col;
 
     switch (direction) {
-        case 'left':  newCol -= steps; break;
+        case 'left': newCol -= steps; break;
         case 'right': newCol += steps; break;
-        case 'up':    newRow -= steps; break;
-        case 'down':  newRow += steps; break;
+        case 'up': newRow -= steps; break;
+        case 'down': newRow += steps; break;
     }
-
-    // 先把自己從 boardState 清除，再移動，再寫回
-    updateBoardStateForVehicle(vehicle, null);
 
     if (vehicle.orientation === 'horizontal') {
         newCol = Math.max(0, Math.min(newCol, GRID_SIZE - vehicle.length));
@@ -2499,24 +2436,6 @@ async function playSingleStep(step, token) {
     }
 
     updateBoardStateForVehicle(vehicle, vehicle.id);
-}
-
-// 鎖定／解鎖重製、換關等按鈕，防止播放中途被意外觸發
-function setUILocked(locked) {
-    resetButton.disabled = locked;
-    nextLevelButton.disabled = locked;
-    difficultySelect.disabled = locked;
-    specificLevelSelect.disabled = locked;
-    showSolutionButton.disabled = locked;
-    if (locked) {
-        resetButton.classList.add('opacity-50', 'cursor-not-allowed');
-        showSolutionButton.classList.add('opacity-50', 'cursor-not-allowed');
-    } else {
-        resetButton.classList.remove('opacity-50', 'cursor-not-allowed');
-        showSolutionButton.classList.remove('opacity-50', 'cursor-not-allowed');
-        difficultySelect.disabled = false;
-        specificLevelSelect.disabled = false;
-    }
 }
 
 function disableDragging() {
