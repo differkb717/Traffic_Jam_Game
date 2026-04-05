@@ -9,13 +9,27 @@
         /* ── 全局 ─────────────────────────────────────────── */
         body { font-family: 'Inter', sans-serif; touch-action: none; }
 
+        /* ── 棋盤尺寸：同時受 vw 與 vh 限制，橫向旋轉也不會超出螢幕 ── */
+        /*   直向：棋盤邊長 = min(90vw, 420px)                          */
+        /*   橫向：棋盤邊長 = min(75vh, 420px)，受可視高度限制          */
+        :root {
+            --board-size: min(90vw, 420px);
+        }
+        @media (orientation: landscape) {
+            :root {
+                /* 橫向時以視窗高度為基準，預留 UI 元件空間 */
+                --board-size: min(75vh, 420px);
+            }
+        }
+
         /* ── 棋盤 ─────────────────────────────────────────── */
         .game-board {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
             grid-template-rows: repeat(6, 1fr);
-            width: 90vw;    max-width: 420px;
-            height: 90vw;   max-height: 420px;
+            width:  var(--board-size);
+            height: var(--board-size);
+            flex-shrink: 0;   /* 橫向雙欄時不讓棋盤被壓縮 */
             border: 5px solid #333;
             position: relative;
             background-color: #f0f0f0;
@@ -28,6 +42,64 @@
             background-size: calc(100% / 6) calc(100% / 6);
             z-index: 1;
             touch-action: none;
+        }
+
+        /* ══ 橫向雙欄版型 ══════════════════════════════════════
+           手機轉橫向時：左欄 = 棋盤，右欄 = 控制面板
+           使用 landscape + 最大高度判斷（排除桌機寬螢幕）      */
+        @media (orientation: landscape) and (max-height: 600px) {
+
+            /* body 改為水平排列，高度鎖定 100dvh 防止溢出 */
+            body {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: center !important;
+                min-height: 100dvh;
+                height: 100dvh;
+                overflow: hidden;
+                gap: 12px;
+                padding: 8px !important;
+            }
+
+            /* 左欄：只放棋盤，垂直置中 */
+            #board-col {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+
+            /* 右欄：標題 + 選單 + 按鈕 + 訊息，可捲動 */
+            #controls-col {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                overflow-y: auto;
+                max-height: 100dvh;
+                min-width: 180px;
+                max-width: 220px;
+                padding: 4px 0;
+            }
+
+            /* 橫向時標題縮小 */
+            #controls-col h1 { font-size: 1.1rem !important; margin: 0 !important; }
+            #controls-col .subtitle { display: none; } /* 副標題隱藏省空間 */
+
+            /* 選單區字體縮小 */
+            #controls-col label,
+            #controls-col select { font-size: 0.82rem !important; }
+            #controls-col select { min-width: 80px !important; padding: 2px 4px !important; }
+
+            /* 按鈕字體縮小 */
+            #controls-col button {
+                font-size: 0.78rem !important;
+                padding: 5px 10px !important;
+            }
+
+            /* 勝利訊息縮小 */
+            #win-message { font-size: 0.9rem !important; padding: 4px !important; }
         }
 
         /* ── 出口 ─────────────────────────────────────────── */
@@ -146,49 +218,56 @@
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
 
-    <!-- ── 標題區 ───────────────────────────────────── -->
-    <div class="w-full max-w-md mb-4 text-center">
-        <h1 class="text-3xl font-bold text-gray-700">Traffic Jam 遊戲</h1>
-        <p class="text-gray-600">將紅色車 (X) 移到出口！</p>
+    <!-- ══ 左欄：棋盤 ════════════════════════════════ -->
+    <div id="board-col">
+        <div id="game-board" class="game-board"></div>
     </div>
 
-    <!-- ── 難易度 / 關卡選擇 ────────────────────────── -->
-    <div class="mt-1 flex flex-row flex-wrap justify-center items-center gap-x-3 gap-y-2 mb-3">
-        <div class="flex items-center">
-            <label for="difficulty-select" class="text-lg mr-1 whitespace-nowrap">難易度:</label>
-            <select id="difficulty-select" class="p-1 border border-gray-300 rounded-md text-base" style="min-width:100px;"></select>
+    <!-- ══ 右欄：控制面板 ════════════════════════════ -->
+    <div id="controls-col" class="w-full max-w-md flex flex-col items-center gap-3">
+
+        <!-- 標題區 -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-700">Traffic Jam 遊戲</h1>
+            <p class="subtitle text-gray-600">將紅色車 (X) 移到出口！</p>
         </div>
-        <div class="flex items-center">
-            <label for="specific-level-select" class="text-lg mr-1 whitespace-nowrap">選擇關卡:</label>
-            <select id="specific-level-select" class="p-1 border border-gray-300 rounded-md text-base" style="min-width:100px;"></select>
+
+        <!-- 難易度 / 關卡選擇 -->
+        <div class="flex flex-row flex-wrap justify-center items-center gap-x-3 gap-y-2">
+            <div class="flex items-center">
+                <label for="difficulty-select" class="text-lg mr-1 whitespace-nowrap">難易度:</label>
+                <select id="difficulty-select" class="p-1 border border-gray-300 rounded-md text-base" style="min-width:100px;"></select>
+            </div>
+            <div class="flex items-center">
+                <label for="specific-level-select" class="text-lg mr-1 whitespace-nowrap">選擇關卡:</label>
+                <select id="specific-level-select" class="p-1 border border-gray-300 rounded-md text-base" style="min-width:100px;"></select>
+            </div>
         </div>
-    </div>
 
-    <!-- ── 棋盤 ────────────────────────────────────── -->
-    <div id="game-board" class="game-board"></div>
+        <!-- 按鈕列 -->
+        <div class="flex justify-center flex-wrap gap-3">
+            <button id="reset-button"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150">
+                重置關卡
+            </button>
+            <button id="next-level-button"
+                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150 hidden">
+                下一關
+            </button>
+            <button id="show-solution-button"
+                class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150">
+                顯示解答
+            </button>
+            <button id="show-instructions-button"
+                class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150">
+                遊戲說明
+            </button>
+        </div>
 
-    <!-- ── 按鈕列 ───────────────────────────────────── -->
-    <div class="mt-6 flex justify-center flex-wrap gap-3">
-        <button id="reset-button"
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150">
-            重置關卡
-        </button>
-        <button id="next-level-button"
-            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150 hidden">
-            下一關
-        </button>
-        <button id="show-solution-button"
-            class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150">
-            顯示解答
-        </button>
-        <button id="show-instructions-button"
-            class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150">
-            遊戲說明
-        </button>
-    </div>
+        <!-- 訊息列 -->
+        <div id="win-message" class="p-3 text-center text-xl font-semibold message-box"></div>
 
-    <!-- ── 訊息列 ───────────────────────────────────── -->
-    <div id="win-message" class="mt-4 p-3 text-center text-xl font-semibold message-box"></div>
+    </div><!-- /#controls-col -->
 
     <!-- ── Modal：遊戲說明 ──────────────────────────── -->
     <div id="instructions-modal" class="modal-overlay">
@@ -2407,16 +2486,23 @@ function syncDropdownsToLevel(levelIdx) {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  § 12  視窗縮放
+//  § 12  視窗縮放 / 螢幕旋轉
 // ════════════════════════════════════════════════════════════════
 
+let _resizeTimer = null;
+
 function handleResize() {
-    calculateCellSize();
-    vehicles.forEach(vData => {
-        const el = $(`vehicle-${vData.id}`);
-        if (el) applyVehicleStyle(el, vData);
-    });
-    positionExitElements();
+    // 旋轉時瀏覽器需要幾個 frame 才完成 viewport 更新，
+    // 用 debounce 確保 clientWidth 取到的是最終值
+    clearTimeout(_resizeTimer);
+    _resizeTimer = setTimeout(() => {
+        calculateCellSize();
+        vehicles.forEach(vData => {
+            const el = $(`vehicle-${vData.id}`);
+            if (el) applyVehicleStyle(el, vData);
+        });
+        positionExitElements();
+    }, 120); // 120ms 足夠讓 iOS/Android 完成旋轉動畫
 }
 
 // ════════════════════════════════════════════════════════════════
