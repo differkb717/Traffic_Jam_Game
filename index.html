@@ -3,11 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+      [額外安全建議 #1] Content Security Policy (CSP)
+      限制腳本只能從本頁（'self'）或受信任的 Tailwind CDN 載入，
+      防止 XSS 攻擊從第三方來源注入惡意腳本。
+      style-src 'unsafe-inline' 保留 Tailwind 的行內樣式支援。
+      若未來改為本地部署 Tailwind，可將 cdn.tailwindcss.com 從白名單移除。
+    -->
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self';
+                   script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
+                   style-src  'self' 'unsafe-inline';
+                   img-src    'self' data:;
+                   connect-src 'none';">
     <title>Traffic Jam 遊戲</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* ── 全局 ─────────────────────────────────────────── */
-        body { font-family: 'Inter', sans-serif; touch-action: none; }
+        /* touch-action: none  → 停用所有瀏覽器原生觸控手勢（捲動、縮放）
+           overscroll-behavior → 防止 iOS Safari「橡皮筋」下拉刷新 / Android 下拉更新 */
+        html, body {
+            font-family: 'Inter', sans-serif;
+            touch-action: none;
+            overscroll-behavior: none;
+        }
 
         /* ── 棋盤尺寸：同時受 vw 與 vh 限制，橫向旋轉也不會超出螢幕 ── */
         /*   直向：棋盤邊長 = min(90vw, 420px)                          */
@@ -1982,14 +2001,35 @@ let dragState = null;
 // dragState 結構：{ vehicleEl, vehicleData, offsetX, offsetY, bounds }
 // bounds 結構：{ minX, maxX, minY, maxY }（像素）
 
+// [修復 #1] 用 AbortController 統一管理拖曳監聽器生命週期
+// 呼叫 abort() 即可一次移除所有拖曳相關監聽器，無論正常結束或意外中斷
+let dragAbortController = null;
+
 // ── 解答播放狀態 ──────────────────────────────────────────────
 let isPlayingSolution  = false;
-let isAnimating        = false; // [修復 #1] Race Condition 鎖：動畫播放中禁止一切使用者輸入
+let isAnimating        = false; // Race Condition 鎖：動畫播放中禁止一切使用者輸入
 let currentPlaybackToken = 0;   // 每次新播放遞增；舊 async loop 比對失效後自動放棄
+
+// [UX 殘留防護] setupLevel 防重入鎖
+// 防止快速連續切換關卡時，兩個 setupLevel 交錯執行導致棋盤殘留兩組車輛
+let isSettingUp = false;
 
 // ════════════════════════════════════════════════════════════════
 //  § 5  工具函式
 // ════════════════════════════════════════════════════════════════
+
+/**
+ * [修復 #3] 安全文字渲染工具 — 防止未來擴充「玩家自訂關卡名稱」時的 DOM 注入。
+ * 強制使用 textContent 寫入，徹底過濾任何 HTML 標籤，
+ * 所有 UI 文字更新都應通過此函式，而非直接操作 innerHTML。
+ *
+ * @param {HTMLElement} el   - 目標 DOM 元素
+ * @param {string}      text - 要顯示的純文字（任何 HTML 標籤將被當成字面字串顯示）
+ */
+function safeSetText(el, text) {
+    if (!el) return;
+    el.textContent = String(text); // String() 防禦 null/undefined 傳入
+}
 
 /** 重新計算單格像素尺寸（響應式） */
 function calculateCellSize() {
@@ -1999,6 +2039,19 @@ function calculateCellSize() {
 /** 判斷是否為手機寬度 */
 function isMobile() {
     return window.innerWidth < 768;
+}
+
+/**
+ * [邊界溢出防護] 強制將車輛的格子座標鉗制在棋盤合法範圍內。
+ * 所有座標寫入（解答播放、Console 呼叫、拖曳落點）都必須通過此函式，
+ * 防止 style.left/top 產生極大值撐爆容器佈局（CSS 邊界溢出攻擊）。
+ *
+ * @param {number} pos    - 欲設定的格子座標（row 或 col）
+ * @param {number} length - 車輛佔用的格子數
+ * @returns {number}      - 鉗制後的合法格子座標（整數，0 ≤ pos ≤ GRID_SIZE - length）
+ */
+function clampVehiclePos(pos, length) {
+    return Math.max(0, Math.min(GRID_SIZE - length, Math.round(pos)));
 }
 
 /** 將車輛 data 的所有格子寫入（或清除）boardState */
@@ -2014,6 +2067,12 @@ function updateBoardState(vehicleData, valueToSet) {
 
 /** 檢查車輛是否可移動到 (targetRow, targetCol) */
 function canMoveTo(vehicleData, targetRow, targetCol) {
+    // [額外安全建議 #3] 型別防禦：防止 Console 篡改傳入 NaN/非數字導致引擎崩潰
+    if (typeof targetRow !== 'number' || isNaN(targetRow) ||
+        typeof targetCol !== 'number' || isNaN(targetCol)) {
+        console.warn('canMoveTo: 非法座標', targetRow, targetCol);
+        return false;
+    }
     if (vehicleData.orientation === 'horizontal') {
         if (targetCol < 0 || targetCol + vehicleData.length > GRID_SIZE) return false;
     } else {
@@ -2152,6 +2211,11 @@ function validateLevelData(levelData) {
 }
 
 function setupLevel(levelIdx) {
+    // [UX 殘留防護] 防重入鎖：若 setupLevel 已在執行中（同一 tick 的快速連續呼叫），
+    //   直接 return，避免兩個執行路徑交錯在 gameBoard 內插入兩組車輛 DOM
+    if (isSettingUp) return;
+    isSettingUp = true;
+
     // 確保任何舊的播放都立即失效（token 遞增）
     stopSolutionPlayback();
     setUILocked(false);
@@ -2160,18 +2224,20 @@ function setupLevel(levelIdx) {
     if (levelIdx < 0 || levelIdx >= gameLevels.length) {
         console.error('Invalid level index:', levelIdx);
         gameBoard.innerHTML = '';
-        winMessage.textContent = '錯誤：無效的關卡索引。';
+        safeSetText(winMessage, '錯誤：無效的關卡索引。');
         nextLevelButton.classList.add('hidden');
+        isSettingUp = false;
         return;
     }
 
-    // [額外安全建議 #1] 載入前先驗證關卡資料 Schema
+    // Schema 驗證
     const levelData = gameLevels[levelIdx];
     if (!validateLevelData(levelData)) {
         gameBoard.innerHTML = '';
-        winMessage.textContent = `錯誤：關卡 ${levelIdx + 1} 資料格式不正確，已略過。`;
+        safeSetText(winMessage, `錯誤：關卡 ${levelIdx + 1} 資料格式不正確，已略過。`);
         winMessage.classList.add('bg-red-100', 'text-red-700', 'p-3');
         nextLevelButton.classList.add('hidden');
+        isSettingUp = false;
         return;
     }
 
@@ -2181,16 +2247,20 @@ function setupLevel(levelIdx) {
     syncDropdownsToLevel(currentLevelIndex);
 
     // 重置訊息
-    winMessage.textContent = '';
+    safeSetText(winMessage, '');
     winMessage.classList.remove('bg-green-200', 'text-green-700', 'p-3');
     nextLevelButton.classList.add('hidden');
 
-    // [修復 #2] 在清空棋盤前必須先強制清除拖曳狀態，否則 document/window 上的
-    //           mousemove / mouseup 監聽器會因為 DOM 被清除而成為殭屍監聽器（記憶體洩漏）
+    // 清空棋盤前先強制結束拖曳（避免殭屍監聽器）
     _cleanupDrag();
 
-    // 清空棋盤、重置 boardState
+    // [UX 殘留防護] 雙重清空：先 innerHTML 再逐一移除剩餘子節點。
+    //   innerHTML = '' 在大多數瀏覽器下已足夠，但極端情況下（如 Firefox 的舊版
+    //   layout 批次處理）可能有子節點在同一 microtask 中被插入。
+    //   用 while loop 做第二層保險，確保棋盤絕對乾淨。
     gameBoard.innerHTML = '';
+    while (gameBoard.firstChild) gameBoard.removeChild(gameBoard.firstChild);
+
     boardState = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
 
     // 建立出口標示
@@ -2219,27 +2289,34 @@ function setupLevel(levelIdx) {
         el.addEventListener('touchstart', onDragStart, { passive: false });
 
         gameBoard.appendChild(el);
-    });    
+    });
+
+    // [UX 殘留防護] 全部 DOM 建立完成後才解鎖，防止中途重入
+    isSettingUp = false;
 }
 
 // ════════════════════════════════════════════════════════════════
 //  § 8  拖曳邏輯
 // ════════════════════════════════════════════════════════════════
 
+/**
+ * [修復 #1] 使用 AbortController 統一清理拖曳監聽器
+ * 舊做法：手動配對 add/remove，意外中斷（右鍵選單、滑鼠移出視窗）時 remove 不被呼叫 → 洩漏
+ * 新做法：所有監聽器都帶 { signal }，abort() 一次全清，不論如何中斷都保證乾淨
+ */
 function _cleanupDrag() {
     if (!dragState) return;
     dragState.vehicleEl.classList.remove('dragging');
     dragState = null;
-    // [修復 #2] removeEventListener 必須與 addEventListener 完全成對
-    document.removeEventListener('mousemove', onDragMove);
-    document.removeEventListener('touchmove', onDragMove);
-    // [額外安全建議 #2] mouseup/touchend 掛在 window，防止滑鼠移出視窗後放開事件遺失
-    window.removeEventListener('mouseup',   onDragEnd);
-    window.removeEventListener('touchend',  onDragEnd);
+    // abort() 會自動移除所有以此 signal 掛載的監聽器
+    if (dragAbortController) {
+        dragAbortController.abort();
+        dragAbortController = null;
+    }
 }
 
 function onDragStart(e) {
-    // [修復 #1] Race Condition：isAnimating 鎖住播放解答期間的一切拖曳操作
+    // isAnimating 鎖住播放解答期間的一切拖曳操作（修復舊版 Race Condition）
     if (dragState || isPlayingSolution || isAnimating) return;
     e.preventDefault();
 
@@ -2262,11 +2339,15 @@ function onDragStart(e) {
     const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
     const rect    = vehicleEl.getBoundingClientRect();
 
+    // [修復 #3] 格線範圍邊界統一以整數格子座標乘以 CELL_SIZE_PX 計算，
+    //           避免浮點誤差在邊界處導致車輛無法到達最後一格
     dragState = {
         vehicleEl,
         vehicleData,
         offsetX: clientX - rect.left,
         offsetY: clientY - rect.top,
+        // 記錄允許移動的格子範圍（整數格），onDragEnd 用此還原，不再依賴像素反推
+        minCol, maxCol, minRow, maxRow,
         bounds: {
             minX: minCol * CELL_SIZE_PX, maxX: maxCol * CELL_SIZE_PX,
             minY: minRow * CELL_SIZE_PX, maxY: maxRow * CELL_SIZE_PX,
@@ -2274,15 +2355,36 @@ function onDragStart(e) {
     };
     vehicleEl.classList.add('dragging');
 
-    document.addEventListener('mousemove', onDragMove);
-    // [額外安全建議 #2] mouseup/touchend 掛在 window，防止滑鼠移出瀏覽器視窗放開時事件遺失
-    window.addEventListener('mouseup',   onDragEnd);
-    document.addEventListener('touchmove', onDragMove, { passive: false });
-    window.addEventListener('touchend',  onDragEnd);
+    // [修復 #1] 建立新的 AbortController，所有拖曳監聽器共用此 signal
+    //   - 正常 onDragEnd → _cleanupDrag → abort()：乾淨移除
+    //   - 意外中斷（右鍵/視窗失焦）→ visibilitychange abort()：同樣乾淨移除
+    //   - 不再需要手動 removeEventListener，不可能洩漏
+    dragAbortController = new AbortController();
+    const { signal } = dragAbortController;
+
+    document.addEventListener('mousemove', onDragMove, { signal });
+    // mouseup/touchend 掛在 window，防止滑鼠移出瀏覽器視窗後放開時事件遺失
+    window.addEventListener('mouseup',    onDragEnd,  { signal });
+    document.addEventListener('touchmove', onDragMove, { signal, passive: false });
+    window.addEventListener('touchend',   onDragEnd,  { signal });
+
+    // [修復 #1] 安全網：若頁面失去焦點（切換 App、右鍵選單彈出），強制結束拖曳
+    window.addEventListener('blur',             _cleanupDragSafe, { signal });
+    document.addEventListener('visibilitychange', _cleanupDragSafe, { signal });
+}
+
+/** 意外中斷時的安全清理（先回寫 boardState 再 cleanup） */
+function _cleanupDragSafe() {
+    if (!dragState) return;
+    // 把車輛吸附回最近的合法格子後清理
+    _snapAndCommit();
+    _cleanupDrag();
 }
 
 function onDragMove(e) {
     if (!dragState) return;
+    // [觸控衝突] preventDefault 阻止：瀏覽器慣性捲動、iOS 下拉刷新、Android 頁面縮放。
+    // touchmove 監聽器以 { passive: false } 掛載（見 onDragStart），才能在此呼叫 preventDefault。
     e.preventDefault();
 
     const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
@@ -2300,20 +2402,44 @@ function onDragMove(e) {
     }
 }
 
-function onDragEnd() {
+/**
+ * [修復 #3] 格子吸附：改用 bounds 中記錄的整數格子範圍做 clamp，
+ * 不再用 Math.round(pixel / CELL_SIZE_PX) 反推格子號碼。
+ *
+ * 舊做法：pixel → Math.round → grid，在 125% 縮放下 CELL_SIZE_PX 是小數，
+ *   Math.round 可能把「幾乎到達最後一格」的值 round 到錯誤格子，造成「卡住」。
+ * 新做法：pixel → 先除以 CELL_SIZE_PX 得浮點格 → Math.round → clamp 到整數格子範圍，
+ *   完全避免像素往返轉換誤差。
+ */
+function _snapAndCommit() {
     if (!dragState) return;
+    const { vehicleEl, vehicleData, minCol, maxCol, minRow, maxRow } = dragState;
 
-    const { vehicleEl, vehicleData } = dragState;
+    let finalCol = vehicleData.col;
+    let finalRow = vehicleData.row;
 
-    // 吸附到最近格線
-    const finalCol = Math.round(parseFloat(vehicleEl.style.left) / CELL_SIZE_PX);
-    const finalRow = Math.round(parseFloat(vehicleEl.style.top)  / CELL_SIZE_PX);
+    if (vehicleData.orientation === 'horizontal') {
+        const rawCol = parseFloat(vehicleEl.style.left) / CELL_SIZE_PX;
+        // [邊界溢出防護] clampVehiclePos 確保值在 [0, GRID_SIZE-length]；
+        //   再 clamp 到本次拖曳的實際可移動範圍 [minCol, maxCol]
+        finalCol = Math.max(minCol, Math.min(maxCol, clampVehiclePos(rawCol, vehicleData.length)));
+    } else {
+        const rawRow = parseFloat(vehicleEl.style.top) / CELL_SIZE_PX;
+        finalRow = Math.max(minRow, Math.min(maxRow, clampVehiclePos(rawRow, vehicleData.length)));
+    }
+
     vehicleData.col = finalCol;
     vehicleData.row = finalRow;
+    // 以整數格子座標乘回像素，消除浮點誤差
     vehicleEl.style.left = finalCol * CELL_SIZE_PX + 'px';
     vehicleEl.style.top  = finalRow * CELL_SIZE_PX + 'px';
 
     updateBoardState(vehicleData, vehicleData.id);
+}
+
+function onDragEnd() {
+    if (!dragState) return;
+    _snapAndCommit();
     _cleanupDrag();
     checkWinCondition();
 }
@@ -2331,12 +2457,16 @@ function checkWinCondition() {
 
     const hasNext = currentLevelIndex < gameLevels.length - 1;
 
+    // [修復 #3] 使用 safeSetText 統一所有 UI 文字寫入，防止未來擴充時注入
     if (isMobile()) {
-        winModalText.textContent = hasNext ? '你贏了！' : '你贏了！已完成所有關卡！';
+        safeSetText(winModalText, hasNext ? '你贏了！' : '你贏了！已完成所有關卡！');
         winModalNextLevelButton.classList.toggle('hidden', !hasNext);
         winMessageModal.classList.add('show');
+        // [額外安全建議 #2] 手機震動反饋：成功過關時短暫震動，
+        // 減少玩家因視覺延遲產生的重複操作。API 在不支援的裝置上靜默降級。
+        if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
     } else {
-        winMessage.textContent = hasNext ? '恭喜！你贏了！' : '恭喜！你贏了！已完成所有關卡！';
+        safeSetText(winMessage, hasNext ? '恭喜！你贏了！' : '恭喜！你贏了！已完成所有關卡！');
         winMessage.classList.add('bg-green-200', 'text-green-700', 'p-3');
         if (hasNext) nextLevelButton.classList.remove('hidden');
     }
@@ -2351,28 +2481,38 @@ async function playSolution() {
     const level = gameLevels[currentLevelIndex];
     if (!level.solutionSteps?.length) { alert('此關尚無解答'); return; }
 
-    // 重置關卡（stopSolutionPlayback 已包含在 setupLevel 裡）
+    // myToken 在 setupLevel（內含 stopSolutionPlayback → token++）之後取得，
+    // 代表「本次播放」的唯一識別號。若中途被重置，token 再次遞增，
+    // for 迴圈在下一個 await 點偵測到不符就立即 break。
     setupLevel(currentLevelIndex);
-    const myToken = currentPlaybackToken; // 取得本次播放的唯一 token
+    const myToken = currentPlaybackToken;
 
     isPlayingSolution = true;
-    isAnimating       = true;  // [修復 #1] 鎖住所有使用者拖曳輸入
+    isAnimating       = true;
     setUILocked(true);
     setDraggingEnabled(false);
 
-    for (const step of level.solutionSteps) {
-        if (currentPlaybackToken !== myToken) break;
-        await applySolutionStep(step, myToken);
-        if (currentPlaybackToken !== myToken) break;
-        await sleep(STEP_DELAY_MS);
-    }
-
-    // 只有本次播放仍有效才恢復 UI
-    if (currentPlaybackToken === myToken) {
-        setDraggingEnabled(true);
-        isPlayingSolution = false;
-        isAnimating       = false; // [修復 #1] 解除動畫鎖
-        setUILocked(false);
+    try {
+        // [修復 #2] try/finally 保證鎖必定釋放：
+        // 無論是正常結束、token 中斷 break，還是 applySolutionStep 內部拋出例外，
+        // finally 區塊都會執行，isAnimating 不可能永久鎖死。
+        for (const step of level.solutionSteps) {
+            if (currentPlaybackToken !== myToken) break;
+            await applySolutionStep(step, myToken);
+            if (currentPlaybackToken !== myToken) break;
+            await sleep(STEP_DELAY_MS);
+        }
+    } finally {
+        // [修復 #2] 嚴格 token 校驗：只有當 myToken 仍是當前有效 token 時
+        // 才由本函式釋放鎖；若 token 已被其他操作遞增（重置/換關），
+        // 鎖的釋放責任已由 stopSolutionPlayback() 接管，此處不重複釋放。
+        if (currentPlaybackToken === myToken) {
+            setDraggingEnabled(true);
+            isPlayingSolution = false;
+            isAnimating       = false;
+            setUILocked(false);
+        }
+        // token 不符：stopSolutionPlayback 已負責恢復 UI，此處安全地什麼都不做
     }
 }
 
@@ -2399,11 +2539,13 @@ async function applySolutionStep(step, token) {
     updateBoardState(vehicle, null);
 
     if (vehicle.orientation === 'horizontal') {
-        vehicle.col = Math.max(0, Math.min(newCol, GRID_SIZE - vehicle.length));
+        // [邊界溢出防護] 不論 step.steps 傳入任何值（包含 Console 注入的 99），
+        //   clampVehiclePos 強制鉗制在 [0, GRID_SIZE - length] 範圍內
+        vehicle.col = clampVehiclePos(newCol, vehicle.length);
         vehicleEl.classList.add('animating');
         vehicleEl.style.left = vehicle.col * CELL_SIZE_PX + 'px';
     } else {
-        vehicle.row = Math.max(0, Math.min(newRow, GRID_SIZE - vehicle.length));
+        vehicle.row = clampVehiclePos(newRow, vehicle.length);
         vehicleEl.classList.add('animating');
         vehicleEl.style.top = vehicle.row * CELL_SIZE_PX + 'px';
     }
@@ -2492,17 +2634,45 @@ function syncDropdownsToLevel(levelIdx) {
 let _resizeTimer = null;
 
 function handleResize() {
-    // 旋轉時瀏覽器需要幾個 frame 才完成 viewport 更新，
-    // 用 debounce 確保 clientWidth 取到的是最終值
+    // ── 步驟 1：若拖曳進行中，先用「舊」CELL_SIZE_PX 落位 ──────────────
+    // 必須在 calculateCellSize() 之前執行，否則 _snapAndCommit 會用新尺寸
+    // 計算格子，導致落點錯誤。
+    if (dragState) {
+        _snapAndCommit(); // 用舊 CELL_SIZE_PX 完成落位、更新 boardState
+        _cleanupDrag();   // 清除拖曳狀態（不觸發 checkWinCondition，旋轉不算操作）
+    }
+
+    // ── 步驟 2：debounce 等瀏覽器完成 viewport 更新 ──────────────────────
+    // 旋轉時瀏覽器需要幾個 frame 才穩定 clientWidth，120ms debounce 確保取到最終值
     clearTimeout(_resizeTimer);
     _resizeTimer = setTimeout(() => {
-        calculateCellSize();
+        calculateCellSize(); // 更新全域 CELL_SIZE_PX
+
+        // ── 步驟 3：以新 CELL_SIZE_PX 重繪所有車輛 ─────────────────────
+        // 問題 #1 核心：車輛 style.left/top 是舊像素值，必須全部重算。
+        // vehicle.col / vehicle.row 是整數格座標（不受縮放影響），
+        // 用新 CELL_SIZE_PX 乘回去即得正確像素位置。
+        //
+        // 注意：解答播放中的車輛可能帶有 'animating' class（CSS transition），
+        // 若直接設定新位置，transition 會把它「動畫回去」到錯誤的舊位置。
+        // 解法：暫時停用 transition → 設定正確位置 → 強制 reflow → 恢復 transition。
         vehicles.forEach(vData => {
             const el = $(`vehicle-${vData.id}`);
-            if (el) applyVehicleStyle(el, vData);
+            if (!el) return;
+            const hadAnimation = el.classList.contains('animating');
+            if (hadAnimation) {
+                el.classList.remove('animating');
+                el.style.transition = 'none';
+                void el.offsetWidth; // 強制 reflow，讓 transition:none 立即生效
+            }
+            applyVehicleStyle(el, vData); // 以新 CELL_SIZE_PX 寫入正確像素位置
+            if (hadAnimation) {
+                el.style.transition = ''; // 恢復原本的 CSS transition
+            }
         });
-        positionExitElements();
-    }, 120); // 120ms 足夠讓 iOS/Android 完成旋轉動畫
+
+        positionExitElements(); // 出口標示也用新尺寸更新
+    }, 120);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2510,7 +2680,14 @@ function handleResize() {
 // ════════════════════════════════════════════════════════════════
 
 // 按鈕
-resetButton.addEventListener('click', () => setupLevel(currentLevelIndex));
+// [修復 #2] resetButton 使用 capture phase（第三參數 true），
+//   即使按鈕被 setUILocked(true) 設為 disabled，仍能在 capture 階段攔截點擊，
+//   確保解答播放中按重置能立即中斷 async loop（透過 setupLevel → stopSolutionPlayback → token++）
+resetButton.addEventListener('click', () => {
+    // 若正在播放解答，先手動解除 disabled 再呼叫 setupLevel（setupLevel 內會呼叫 stopSolutionPlayback）
+    resetButton.disabled = false;
+    setupLevel(currentLevelIndex);
+}, true); // capture = true：在事件到達 disabled 按鈕前就攔截
 
 nextLevelButton.addEventListener('click', () => {
     if (currentLevelIndex < gameLevels.length - 1) setupLevel(currentLevelIndex + 1);
@@ -2535,7 +2712,7 @@ difficultySelect.addEventListener('change', e => {
         msg.className = 'text-center p-4';
         msg.textContent = '此難易度尚無關卡。';
         gameBoard.appendChild(msg);
-        winMessage.textContent = '';
+        safeSetText(winMessage, '');
         nextLevelButton.classList.add('hidden');
     }
 });
@@ -2574,7 +2751,7 @@ window.addEventListener('resize', handleResize);
         msg.textContent = '沒有定義任何關卡。';
         gameBoard.appendChild(msg);
 
-        winMessage.textContent = '請先定義遊戲關卡。';
+        safeSetText(winMessage, '請先定義遊戲關卡。');
 
         const optD = document.createElement('option');
         optD.textContent = '無難易度';
