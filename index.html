@@ -1905,7 +1905,8 @@ let dragState = null;
 
 // ── 解答播放狀態 ──────────────────────────────────────────────
 let isPlayingSolution  = false;
-let currentPlaybackToken = 0; // 每次新播放遞增；舊 async loop 比對失效後自動放棄
+let isAnimating        = false; // [修復 #1] Race Condition 鎖：動畫播放中禁止一切使用者輸入
+let currentPlaybackToken = 0;   // 每次新播放遞增；舊 async loop 比對失效後自動放棄
 
 // ════════════════════════════════════════════════════════════════
 //  § 5  工具函式
@@ -1986,6 +1987,7 @@ function positionExitElements() {
 function stopSolutionPlayback() {
     currentPlaybackToken++; // 讓舊 async loop 在下一個 await 點自行放棄
     isPlayingSolution = false;
+    isAnimating       = false; // [修復 #1] 強制解除動畫鎖
 // 強制清除所有車輛的動畫 class 和 transition
     gameBoard.querySelectorAll('.vehicle').forEach(el => {
         el.classList.remove('animating', 'dragging');
@@ -2021,6 +2023,55 @@ function setDraggingEnabled(enabled) {
 //  § 7  關卡設置
 // ════════════════════════════════════════════════════════════════
 
+/**
+ * [額外安全建議 #1] Schema Validation
+ * 在載入關卡前驗證所有車輛資料，確保座標與長度皆為合法整數，
+ * 防止惡意或損壞資料（如 length=-1、row=NaN）導致 canMoveTo 無限迴圈或陣列越界（DoS）。
+ */
+function validateLevelData(levelData) {
+    if (!levelData || typeof levelData !== 'object') return false;
+    if (!Number.isInteger(levelData.exitRow) || levelData.exitRow < 0 || levelData.exitRow >= GRID_SIZE) {
+        console.error('Schema Validation: 無效的 exitRow', levelData.exitRow);
+        return false;
+    }
+    if (!Array.isArray(levelData.vehicles) || levelData.vehicles.length === 0) {
+        console.error('Schema Validation: vehicles 必須為非空陣列');
+        return false;
+    }
+    for (const v of levelData.vehicles) {
+        const { id, length, row, col, orientation } = v;
+        if (typeof id !== 'string' || id.trim() === '') {
+            console.error('Schema Validation: 車輛 id 無效', v);
+            return false;
+        }
+        if (!Number.isInteger(length) || length < 2 || length > GRID_SIZE) {
+            console.error(`Schema Validation: 車輛 ${id} length 無效`, length);
+            return false;
+        }
+        if (!Number.isInteger(row) || row < 0 || row >= GRID_SIZE) {
+            console.error(`Schema Validation: 車輛 ${id} row 無效`, row);
+            return false;
+        }
+        if (!Number.isInteger(col) || col < 0 || col >= GRID_SIZE) {
+            console.error(`Schema Validation: 車輛 ${id} col 無效`, col);
+            return false;
+        }
+        if (orientation === 'horizontal' && col + length > GRID_SIZE) {
+            console.error(`Schema Validation: 車輛 ${id} 水平超出棋盤範圍`);
+            return false;
+        }
+        if (orientation === 'vertical' && row + length > GRID_SIZE) {
+            console.error(`Schema Validation: 車輛 ${id} 垂直超出棋盤範圍`);
+            return false;
+        }
+        if (orientation !== 'horizontal' && orientation !== 'vertical') {
+            console.error(`Schema Validation: 車輛 ${id} orientation 無效`, orientation);
+            return false;
+        }
+    }
+    return true;
+}
+
 function setupLevel(levelIdx) {
     // 確保任何舊的播放都立即失效（token 遞增）
     stopSolutionPlayback();
@@ -2035,8 +2086,17 @@ function setupLevel(levelIdx) {
         return;
     }
 
-    currentLevelIndex = levelIdx;
-    const levelData = gameLevels[currentLevelIndex];
+    // [額外安全建議 #1] 載入前先驗證關卡資料 Schema
+    const levelData = gameLevels[levelIdx];
+    if (!validateLevelData(levelData)) {
+        gameBoard.innerHTML = '';
+        winMessage.textContent = `錯誤：關卡 ${levelIdx + 1} 資料格式不正確，已略過。`;
+        winMessage.classList.add('bg-red-100', 'text-red-700', 'p-3');
+        nextLevelButton.classList.add('hidden');
+        return;
+    }
+
+    currentLevelIndex = levelIdx; // 驗證通過後才更新
 
     // 同步下拉選單
     syncDropdownsToLevel(currentLevelIndex);
@@ -2045,6 +2105,10 @@ function setupLevel(levelIdx) {
     winMessage.textContent = '';
     winMessage.classList.remove('bg-green-200', 'text-green-700', 'p-3');
     nextLevelButton.classList.add('hidden');
+
+    // [修復 #2] 在清空棋盤前必須先強制清除拖曳狀態，否則 document/window 上的
+    //           mousemove / mouseup 監聽器會因為 DOM 被清除而成為殭屍監聽器（記憶體洩漏）
+    _cleanupDrag();
 
     // 清空棋盤、重置 boardState
     gameBoard.innerHTML = '';
@@ -2087,14 +2151,17 @@ function _cleanupDrag() {
     if (!dragState) return;
     dragState.vehicleEl.classList.remove('dragging');
     dragState = null;
+    // [修復 #2] removeEventListener 必須與 addEventListener 完全成對
     document.removeEventListener('mousemove', onDragMove);
-    document.removeEventListener('mouseup',   onDragEnd);
     document.removeEventListener('touchmove', onDragMove);
-    document.removeEventListener('touchend',  onDragEnd);
+    // [額外安全建議 #2] mouseup/touchend 掛在 window，防止滑鼠移出視窗後放開事件遺失
+    window.removeEventListener('mouseup',   onDragEnd);
+    window.removeEventListener('touchend',  onDragEnd);
 }
 
 function onDragStart(e) {
-    if (dragState || isPlayingSolution) return;
+    // [修復 #1] Race Condition：isAnimating 鎖住播放解答期間的一切拖曳操作
+    if (dragState || isPlayingSolution || isAnimating) return;
     e.preventDefault();
 
     const vehicleEl   = e.currentTarget;
@@ -2129,9 +2196,10 @@ function onDragStart(e) {
     vehicleEl.classList.add('dragging');
 
     document.addEventListener('mousemove', onDragMove);
-    document.addEventListener('mouseup',   onDragEnd);
+    // [額外安全建議 #2] mouseup/touchend 掛在 window，防止滑鼠移出瀏覽器視窗放開時事件遺失
+    window.addEventListener('mouseup',   onDragEnd);
     document.addEventListener('touchmove', onDragMove, { passive: false });
-    document.addEventListener('touchend',  onDragEnd);
+    window.addEventListener('touchend',  onDragEnd);
 }
 
 function onDragMove(e) {
@@ -2209,6 +2277,7 @@ async function playSolution() {
     const myToken = currentPlaybackToken; // 取得本次播放的唯一 token
 
     isPlayingSolution = true;
+    isAnimating       = true;  // [修復 #1] 鎖住所有使用者拖曳輸入
     setUILocked(true);
     setDraggingEnabled(false);
 
@@ -2223,6 +2292,7 @@ async function playSolution() {
     if (currentPlaybackToken === myToken) {
         setDraggingEnabled(true);
         isPlayingSolution = false;
+        isAnimating       = false; // [修復 #1] 解除動畫鎖
         setUILocked(false);
     }
 }
@@ -2283,9 +2353,13 @@ function populateDifficultySelect() {
 
 function populateSpecificLevelSelect(difficultyKey, preferredLevelNum = null) {
     const diff = difficulties[difficultyKey];
-    specificLevelSelect.innerHTML = '';
+    specificLevelSelect.innerHTML = ''; // 清空（安全：無使用者資料）
     if (!diff) {
-        specificLevelSelect.innerHTML = '<option value="">--</option>';
+        // [修復 #3] 使用 createElement 取代 innerHTML 字串，防止未來注入風險
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '--';
+        specificLevelSelect.appendChild(opt);
         return;
     }
 
@@ -2303,7 +2377,11 @@ function populateSpecificLevelSelect(difficultyKey, preferredLevelNum = null) {
     if (target && specificLevelSelect.querySelector(`option[value="${target}"]`)) {
         specificLevelSelect.value = target;
     } else if (!firstAvailable) {
-        specificLevelSelect.innerHTML = '<option value="">無關卡</option>';
+        // [修復 #3] 同上，使用 createElement
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '無關卡';
+        specificLevelSelect.appendChild(opt);
     }
 }
 
@@ -2365,7 +2443,12 @@ difficultySelect.addEventListener('change', e => {
     if (idx !== -1) {
         setupLevel(idx);
     } else {
-        gameBoard.innerHTML = '<p class="text-center p-4">此難易度尚無關卡。</p>';
+        // [修復 #3] 使用 createElement + textContent 取代 innerHTML 字串拼接
+        gameBoard.innerHTML = '';
+        const msg = document.createElement('p');
+        msg.className = 'text-center p-4';
+        msg.textContent = '此難易度尚無關卡。';
+        gameBoard.appendChild(msg);
         winMessage.textContent = '';
         nextLevelButton.classList.add('hidden');
     }
@@ -2399,10 +2482,24 @@ window.addEventListener('resize', handleResize);
 
 (function init() {
     if (!gameLevels.length) {
-        gameBoard.innerHTML = '<p class="text-center p-4">沒有定義任何關卡。</p>';
+        // [修復 #3] 一律使用 createElement / textContent，杜絕 XSS 風險
+        const msg = document.createElement('p');
+        msg.className = 'text-center p-4';
+        msg.textContent = '沒有定義任何關卡。';
+        gameBoard.appendChild(msg);
+
         winMessage.textContent = '請先定義遊戲關卡。';
-        difficultySelect.innerHTML = '<option>無難易度</option>';
-        specificLevelSelect.innerHTML = '<option>無關卡</option>';
+
+        const optD = document.createElement('option');
+        optD.textContent = '無難易度';
+        difficultySelect.innerHTML = '';
+        difficultySelect.appendChild(optD);
+
+        const optL = document.createElement('option');
+        optL.textContent = '無關卡';
+        specificLevelSelect.innerHTML = '';
+        specificLevelSelect.appendChild(optL);
+
         [difficultySelect, specificLevelSelect].forEach(el => el.disabled = true);
         return;
     }
