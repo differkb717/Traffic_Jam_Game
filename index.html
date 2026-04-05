@@ -8,7 +8,6 @@
       限制腳本只能從本頁（'self'）或受信任的 Tailwind CDN 載入，
       防止 XSS 攻擊從第三方來源注入惡意腳本。
       style-src 'unsafe-inline' 保留 Tailwind 的行內樣式支援。
-      若未來改為本地部署 Tailwind，可將 cdn.tailwindcss.com 從白名單移除。
     -->
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self';
@@ -20,23 +19,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* ── 全局 ─────────────────────────────────────────── */
-        /* touch-action: none  → 停用所有瀏覽器原生觸控手勢（捲動、縮放）
-           overscroll-behavior → 防止 iOS Safari「橡皮筋」下拉刷新 / Android 下拉更新 */
         html, body {
             font-family: 'Inter', sans-serif;
             touch-action: none;
             overscroll-behavior: none;
         }
 
-        /* ── 棋盤尺寸：同時受 vw 與 vh 限制，橫向旋轉也不會超出螢幕 ── */
-        /*   直向：棋盤邊長 = min(90vw, 420px)                          */
-        /*   橫向：棋盤邊長 = min(75vh, 420px)，受可視高度限制          */
         :root {
             --board-size: min(90vw, 420px);
         }
         @media (orientation: landscape) {
             :root {
-                /* 橫向時以視窗高度為基準，預留 UI 元件空間 */
                 --board-size: min(75vh, 420px);
             }
         }
@@ -48,7 +41,7 @@
             grid-template-rows: repeat(6, 1fr);
             width:  var(--board-size);
             height: var(--board-size);
-            flex-shrink: 0;   /* 橫向雙欄時不讓棋盤被壓縮 */
+            flex-shrink: 0;
             border: 5px solid #333;
             position: relative;
             background-color: #f0f0f0;
@@ -63,12 +56,8 @@
             touch-action: none;
         }
 
-        /* ══ 橫向雙欄版型 ══════════════════════════════════════
-           手機轉橫向時：左欄 = 棋盤，右欄 = 控制面板
-           使用 landscape + 最大高度判斷（排除桌機寬螢幕）      */
+        /* ══ 橫向雙欄版型 ══════════════════════════════════════ */
         @media (orientation: landscape) and (max-height: 600px) {
-
-            /* body 改為水平排列，高度鎖定 100dvh 防止溢出 */
             body {
                 flex-direction: row !important;
                 align-items: center !important;
@@ -80,7 +69,6 @@
                 padding: 8px !important;
             }
 
-            /* 左欄：只放棋盤，垂直置中 */
             #board-col {
                 display: flex;
                 align-items: center;
@@ -88,7 +76,6 @@
                 flex-shrink: 0;
             }
 
-            /* 右欄：標題 + 選單 + 按鈕 + 訊息，可捲動 */
             #controls-col {
                 display: flex;
                 flex-direction: column;
@@ -102,22 +89,18 @@
                 padding: 4px 0;
             }
 
-            /* 橫向時標題縮小 */
             #controls-col h1 { font-size: 1.1rem !important; margin: 0 !important; }
-            #controls-col .subtitle { display: none; } /* 副標題隱藏省空間 */
+            #controls-col .subtitle { display: none; }
 
-            /* 選單區字體縮小 */
             #controls-col label,
             #controls-col select { font-size: 0.82rem !important; }
             #controls-col select { min-width: 80px !important; padding: 2px 4px !important; }
 
-            /* 按鈕字體縮小 */
             #controls-col button {
                 font-size: 0.78rem !important;
                 padding: 5px 10px !important;
             }
 
-            /* 勝利訊息縮小 */
             #win-message { font-size: 0.9rem !important; padding: 4px !important; }
         }
 
@@ -160,22 +143,20 @@
             user-select: none;
             transition: left 0.18s ease-out, top 0.18s ease-out;
             z-index: 10;
-            touch-action: none;           /* 防止手機預設觸控行為干擾拖曳 */
-            will-change: left, top;       /* 優化動畫性能 */
+            touch-action: none;
+            will-change: left, top;
         }
         .vehicle.dragging {
             cursor: grabbing;
             z-index: 11;
             opacity: 0.8;
-            transition: none; /* 拖曳中不要有 transition，避免延遲感 */
+            transition: none;
         }
-        /* 解答播放中的車輛有動畫效果 */
         .vehicle.animating {
             transition: left 0.3s ease-in-out, top 0.3s ease-in-out;
         }
 
-        /* ── 車輛顏色（以字母 ID 對應） ───────────────────── */
-        /* 注意：O/P/Q/R 用於 truck，顏色與 B/E/C/F 刻意不同以便區分 */
+        /* ── 車輛顏色 ───────────────────── */
         .color-X { background-color: #FF0000; color: #fff; text-shadow: none; }
         .color-A { background-color: #32CD32; color: #333; text-shadow: none; }
         .color-B { background-color: #FFD700; color: #333; text-shadow: none; }
@@ -231,7 +212,6 @@
         }
         .modal-close-button:hover { background-color: #eee; }
 
-        /* ── 訊息框 ───────────────────────────────────────── */
         .message-box { min-height: 30px; border-radius: 8px; }
     </style>
 </head>
@@ -244,14 +224,11 @@
 
     <!-- ══ 右欄：控制面板 ════════════════════════════ -->
     <div id="controls-col" class="w-full max-w-md flex flex-col items-center gap-3">
-
-        <!-- 標題區 -->
         <div class="text-center">
-            <h1 class="text-3xl font-bold text-gray-700">Traffic Jam 遊戲 <span class="text-sm font-normal text-gray-500">v12</span></h1>
+            <h1 class="text-3xl font-bold text-gray-700">Traffic Jam 遊戲</h1>
             <p class="subtitle text-gray-600">將紅色車 (X) 移到出口！</p>
         </div>
 
-        <!-- 難易度 / 關卡選擇 -->
         <div class="flex flex-row flex-wrap justify-center items-center gap-x-3 gap-y-2">
             <div class="flex items-center">
                 <label for="difficulty-select" class="text-lg mr-1 whitespace-nowrap">難易度:</label>
@@ -263,7 +240,6 @@
             </div>
         </div>
 
-        <!-- 按鈕列 -->
         <div class="flex justify-center flex-wrap gap-3">
             <button id="reset-button"
                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150">
@@ -283,10 +259,8 @@
             </button>
         </div>
 
-        <!-- 訊息列 -->
         <div id="win-message" class="p-3 text-center text-xl font-semibold message-box"></div>
-
-    </div><!-- /#controls-col -->
+    </div>
 
     <!-- ── Modal：遊戲說明 ──────────────────────────── -->
     <div id="instructions-modal" class="modal-overlay">
@@ -322,44 +296,45 @@
 <script>
 'use strict';
 
-// ════════════════════════════════════════════════════════════════
-//  § 1  常數 & DOM 參照
-// ════════════════════════════════════════════════════════════════
-const GRID_SIZE    = 6;
-const STEP_DELAY_MS = 550; // 解答播放每步間隔（ms）
+(function () {
+    // ════════════════════════════════════════════════════════════════
+    //  § 1  常數 & DOM 參照（全部封裝在 IIFE 內，避免全域污染）
+    // ════════════════════════════════════════════════════════════════
+    const GRID_SIZE = 6;
+    const STEP_DELAY_MS = 550;
 
-const $ = id => document.getElementById(id);
+    const $ = id => document.getElementById(id);
 
-const gameBoard          = $('game-board');
-const resetButton        = $('reset-button');
-const nextLevelButton    = $('next-level-button');
-const showSolutionButton = $('show-solution-button');
-const showInstructionsButton = $('show-instructions-button');
-const difficultySelect   = $('difficulty-select');
-const specificLevelSelect= $('specific-level-select');
-const winMessage         = $('win-message');
-const instructionsModal  = $('instructions-modal');
-const closeInstructionsButton = $('close-instructions-button');
-const winMessageModal    = $('win-message-modal');
-const winModalTitle      = $('win-modal-title');
-const winModalText       = $('win-modal-text');
-const winModalCloseButton     = $('win-modal-close-button');
-const winModalNextLevelButton = $('win-modal-next-level-button');
+    const gameBoard          = $('game-board');
+    const resetButton        = $('reset-button');
+    const nextLevelButton    = $('next-level-button');
+    const showSolutionButton = $('show-solution-button');
+    const showInstructionsButton = $('show-instructions-button');
+    const difficultySelect   = $('difficulty-select');
+    const specificLevelSelect= $('specific-level-select');
+    const winMessage         = $('win-message');
+    const instructionsModal  = $('instructions-modal');
+    const closeInstructionsButton = $('close-instructions-button');
+    const winMessageModal    = $('win-message-modal');
+    const winModalTitle      = $('win-modal-title');
+    const winModalText       = $('win-modal-text');
+    const winModalCloseButton     = $('win-modal-close-button');
+    const winModalNextLevelButton = $('win-modal-next-level-button');
 
-// ════════════════════════════════════════════════════════════════
-//  § 2  難易度設定
-// ════════════════════════════════════════════════════════════════
-const difficulties = {
-    BEGINNER:     { name: '初級 (1-10)',   startLevel: 1,  endLevel: 10 },
-    INTERMEDIATE: { name: '中級 (11-20)',  startLevel: 11, endLevel: 20 },
-    ADVANCED:     { name: '高級 (21-30)',  startLevel: 21, endLevel: 30 },
-    EXPERT:       { name: '專家 (31-40)',  startLevel: 31, endLevel: 40 },
-};
+    // ════════════════════════════════════════════════════════════════
+    //  § 2  難易度設定
+    // ════════════════════════════════════════════════════════════════
+    const difficulties = {
+        BEGINNER:     { name: '初級 (1-10)',   startLevel: 1,  endLevel: 10 },
+        INTERMEDIATE: { name: '中級 (11-20)',  startLevel: 11, endLevel: 20 },
+        ADVANCED:     { name: '高級 (21-30)',  startLevel: 21, endLevel: 30 },
+        EXPERT:       { name: '專家 (31-40)',  startLevel: 31, endLevel: 40 },
+    };
 
-// ════════════════════════════════════════════════════════════════
-//  § 3  關卡資料（保持原樣，勿動）
-// ════════════════════════════════════════════════════════════════
-const gameLevels = [
+    // ════════════════════════════════════════════════════════════════
+    //  § 3  關卡資料（保持完全不變）
+    // ════════════════════════════════════════════════════════════════
+    const gameLevels = [
             { // Level 1 (BEGINNER)
                 levelNumber: 1, exitRow: 2, 
                 vehicles: [ /* ... Level 1 vehicles from your original code ... */ 
@@ -1988,196 +1963,191 @@ const gameLevels = [
             // ... (Levels 31-40 for EXPERT)
         ];
 
-// ════════════════════════════════════════════════════════════════
-//  § 4  遊戲執行狀態
-// ════════════════════════════════════════════════════════════════
-let CELL_SIZE_PX      = 0;
-let currentLevelIndex = 0;
-let vehicles          = [];   
-let boardState        = [];   
+    // ════════════════════════════════════════════════════════════════
+    //  § 4  遊戲執行狀態（全部封裝在閉包內）
+    // ════════════════════════════════════════════════════════════════
+    let CELL_SIZE_PX      = 0;
+    let currentLevelIndex = 0;
+    let vehicles          = [];
+    let boardState        = [];
 
-// ── 拖曳狀態 ──────────────────────────────────────────────────
-let dragState = null;
-let dragAbortController = null;
+    let dragState = null;
+    let dragAbortController = null;
 
-// ── 解答播放狀態 ──────────────────────────────────────────────
-let isPlayingSolution  = false;
-let isAnimating        = false;
-let currentPlaybackToken = 0;
+    let isPlayingSolution  = false;
+    let isAnimating        = false;
+    let currentPlaybackToken = 0;
 
-// [UX 殘留防護] setupLevel 防重入鎖
-let isSettingUp = false;
+    let isSettingUp = false;
 
-// ════════════════════════════════════════════════════════════════
-//  § 5  工具函式
-// ════════════════════════════════════════════════════════════════
-
-function safeSetText(el, text) {
-    if (!el) return;
-    el.textContent = String(text);
-}
-
-function calculateCellSize() {
-    CELL_SIZE_PX = gameBoard.clientWidth / GRID_SIZE;
-}
-
-function isMobile() {
-    return window.innerWidth < 768;
-}
-
-function clampVehiclePos(pos, length) {
-    return Math.max(0, Math.min(GRID_SIZE - length, Math.round(pos)));
-}
-
-function updateBoardState(vehicleData, valueToSet) {
-    for (let i = 0; i < vehicleData.length; i++) {
-        const r = vehicleData.orientation === 'horizontal' ? vehicleData.row : vehicleData.row + i;
-        const c = vehicleData.orientation === 'horizontal' ? vehicleData.col + i : vehicleData.col;
-        if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
-            boardState[r][c] = valueToSet;
-        }
-    }
-}
-
-function canMoveTo(vehicleData, targetRow, targetCol) {
-    if (typeof targetRow !== 'number' || isNaN(targetRow) ||
-        typeof targetCol !== 'number' || isNaN(targetCol)) {
-        return false;
-    }
-    if (vehicleData.orientation === 'horizontal') {
-        if (targetCol < 0 || targetCol + vehicleData.length > GRID_SIZE) return false;
-    } else {
-        if (targetRow < 0 || targetRow + vehicleData.length > GRID_SIZE) return false;
-    }
-    for (let i = 0; i < vehicleData.length; i++) {
-        const r = vehicleData.orientation === 'horizontal' ? targetRow       : targetRow + i;
-        const c = vehicleData.orientation === 'horizontal' ? targetCol + i   : targetCol;
-        if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) continue;
-        if (boardState[r][c] !== null && boardState[r][c] !== vehicleData.id) return false;
-    }
-    return true;
-}
-
-function applyVehicleStyle(el, vehicleData) {
-    if (vehicleData.orientation === 'horizontal') {
-        el.style.width  = vehicleData.length * CELL_SIZE_PX + 'px';
-        el.style.height = CELL_SIZE_PX + 'px';
-    } else {
-        el.style.width  = CELL_SIZE_PX + 'px';
-        el.style.height = vehicleData.length * CELL_SIZE_PX + 'px';
-    }
-    el.style.left = vehicleData.col * CELL_SIZE_PX + 'px';
-    el.style.top  = vehicleData.row * CELL_SIZE_PX + 'px';
-}
-
-function positionExitElements() {
-    const levelData  = gameLevels[currentLevelIndex];
-    const exitArea   = gameBoard.querySelector('.exit-area');
-    const filler     = gameBoard.querySelector('.exit-border-filler');
-    if (exitArea) {
-        exitArea.style.height = CELL_SIZE_PX + 'px';
-        exitArea.style.top    = levelData.exitRow * CELL_SIZE_PX + 'px';
-        exitArea.style.left   = (GRID_SIZE - 1) * CELL_SIZE_PX + 'px';
-        exitArea.style.width  = CELL_SIZE_PX + 'px';
-    }
-    if (filler) {
-        filler.style.top    = levelData.exitRow * CELL_SIZE_PX + 'px';
-        filler.style.height = CELL_SIZE_PX + 'px';
-    }
-}
-
-// ════════════════════════════════════════════════════════════════
-//  § 6  播放控制
-// ════════════════════════════════════════════════════════════════
-
-function stopSolutionPlayback() {
-    currentPlaybackToken++;
-    isPlayingSolution = false;
-    isAnimating       = false;
-    gameBoard.querySelectorAll('.vehicle').forEach(el => {
-        el.classList.remove('animating', 'dragging');
-        el.style.transition = 'none';
-        void el.offsetWidth;
-        el.style.transition = '';
-    });
-    _cleanupDrag();
-    setUILocked(false);
-    setDraggingEnabled(true);
-}
-
-function setUILocked(locked) {
-    const lockTargets = [resetButton, showSolutionButton];
-    const disableTargets = [difficultySelect, specificLevelSelect, nextLevelButton];
-    lockTargets.forEach(el => {
-        el.disabled = locked;
-        el.classList.toggle('opacity-50', locked);
-        el.classList.toggle('cursor-not-allowed', locked);
-    });
-    disableTargets.forEach(el => { el.disabled = locked; });
-}
-
-function setDraggingEnabled(enabled) {
-    gameBoard.querySelectorAll('.vehicle').forEach(v => {
-        v.style.pointerEvents = enabled ? 'auto' : 'none';
-    });
-}
-
-// ════════════════════════════════════════════════════════════════
-//  § 7  關卡設置（v12 核心修正）
-// ════════════════════════════════════════════════════════════════
-
-function validateLevelData(levelData) {
-    if (!levelData || typeof levelData !== 'object') return false;
-
-    // 基本欄位檢查
-    if (!Number.isInteger(levelData.exitRow) || levelData.exitRow < 0 || levelData.exitRow >= GRID_SIZE) {
-        console.error('Schema Validation: 無效的 exitRow', levelData.exitRow);
-        return false;
-    }
-    if (!Array.isArray(levelData.vehicles) || levelData.vehicles.length === 0) {
-        console.error('Schema Validation: vehicles 必須為非空陣列');
-        return false;
+    // ════════════════════════════════════════════════════════════════
+    //  § 5  工具函式
+    // ════════════════════════════════════════════════════════════════
+    function safeSetText(el, text) {
+        if (!el) return;
+        el.textContent = String(text);
     }
 
-    let playerCount = 0;
-    for (const v of levelData.vehicles) {
-        const { id, length, row, col, orientation, isPlayer } = v;
+    function calculateCellSize() {
+        CELL_SIZE_PX = gameBoard.clientWidth / GRID_SIZE;
+    }
 
-        if (typeof id !== 'string' || id.trim() === '') return false;
-        if (!Number.isInteger(length) || length < 2 || length > GRID_SIZE) return false;
-        if (!Number.isInteger(row) || row < 0 || row >= GRID_SIZE) return false;
-        if (!Number.isInteger(col) || col < 0 || col >= GRID_SIZE) return false;
-        if (orientation === 'horizontal' && col + length > GRID_SIZE) return false;
-        if (orientation === 'vertical' && row + length > GRID_SIZE) return false;
-        if (orientation !== 'horizontal' && orientation !== 'vertical') return false;
+    function isMobile() {
+        return window.innerWidth < 768;
+    }
 
-        // 【問題 #2 修正】強制檢查 isPlayer: true 必須存在且唯一
-        if (isPlayer === true) {
-            playerCount++;
-            if (id !== 'X' || orientation !== 'horizontal' || length !== 2) {
-                console.error('Schema Validation: isPlayer 車輛必須是紅色 X，且為 horizontal length=2');
-                return false;
+    function clampVehiclePos(pos, length) {
+        return Math.max(0, Math.min(GRID_SIZE - length, Math.round(pos)));
+    }
+
+    function updateBoardState(vehicleData, valueToSet) {
+        for (let i = 0; i < vehicleData.length; i++) {
+            const r = vehicleData.orientation === 'horizontal' ? vehicleData.row : vehicleData.row + i;
+            const c = vehicleData.orientation === 'horizontal' ? vehicleData.col + i : vehicleData.col;
+            if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+                boardState[r][c] = valueToSet;
             }
         }
     }
 
-    if (playerCount !== 1) {
-        console.error('Schema Validation: 必須有且僅有一輛 isPlayer: true 的車輛');
-        return false;
+    function canMoveTo(vehicleData, targetRow, targetCol) {
+        if (typeof targetRow !== 'number' || isNaN(targetRow) ||
+            typeof targetCol !== 'number' || isNaN(targetCol)) return false;
+        if (vehicleData.orientation === 'horizontal') {
+            if (targetCol < 0 || targetCol + vehicleData.length > GRID_SIZE) return false;
+        } else {
+            if (targetRow < 0 || targetRow + vehicleData.length > GRID_SIZE) return false;
+        }
+        for (let i = 0; i < vehicleData.length; i++) {
+            const r = vehicleData.orientation === 'horizontal' ? targetRow : targetRow + i;
+            const c = vehicleData.orientation === 'horizontal' ? targetCol + i : targetCol;
+            if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) continue;
+            if (boardState[r][c] !== null && boardState[r][c] !== vehicleData.id) return false;
+        }
+        return true;
     }
 
-    return true;
-}
+    function applyVehicleStyle(el, vehicleData) {
+        if (vehicleData.orientation === 'horizontal') {
+            el.style.width  = vehicleData.length * CELL_SIZE_PX + 'px';
+            el.style.height = CELL_SIZE_PX + 'px';
+        } else {
+            el.style.width  = CELL_SIZE_PX + 'px';
+            el.style.height = vehicleData.length * CELL_SIZE_PX + 'px';
+        }
+        el.style.left = vehicleData.col * CELL_SIZE_PX + 'px';
+        el.style.top  = vehicleData.row * CELL_SIZE_PX + 'px';
+    }
 
-function setupLevel(levelIdx) {
-    if (isSettingUp) return;
-    isSettingUp = true;
+    function positionExitElements() {
+        const levelData = gameLevels[currentLevelIndex];
+        const exitArea  = gameBoard.querySelector('.exit-area');
+        const filler    = gameBoard.querySelector('.exit-border-filler');
+        if (exitArea) {
+            exitArea.style.height = CELL_SIZE_PX + 'px';
+            exitArea.style.top    = levelData.exitRow * CELL_SIZE_PX + 'px';
+            exitArea.style.left   = (GRID_SIZE - 1) * CELL_SIZE_PX + 'px';
+            exitArea.style.width  = CELL_SIZE_PX + 'px';
+        }
+        if (filler) {
+            filler.style.top    = levelData.exitRow * CELL_SIZE_PX + 'px';
+            filler.style.height = CELL_SIZE_PX + 'px';
+        }
+    }
 
-    // v12 核心修正 #1：使用 try...catch...finally 確保鎖永遠被釋放
-    try {
+    // ════════════════════════════════════════════════════════════════
+    //  § 6  播放控制
+    // ════════════════════════════════════════════════════════════════
+    function stopSolutionPlayback() {
+        currentPlaybackToken++;
+        isPlayingSolution = false;
+        isAnimating = false;
+        gameBoard.querySelectorAll('.vehicle').forEach(el => {
+            el.classList.remove('animating', 'dragging');
+            el.style.transition = 'none';
+            void el.offsetWidth;
+            el.style.transition = '';
+        });
+        cleanupDrag();
+        setUILocked(false);
+        setDraggingEnabled(true);
+    }
+
+    function setUILocked(locked) {
+        const lockTargets = [resetButton, showSolutionButton];
+        const disableTargets = [difficultySelect, specificLevelSelect, nextLevelButton];
+        lockTargets.forEach(el => {
+            if (el) {
+                el.disabled = locked;
+                el.classList.toggle('opacity-50', locked);
+                el.classList.toggle('cursor-not-allowed', locked);
+            }
+        });
+        disableTargets.forEach(el => { if (el) el.disabled = locked; });
+    }
+
+    function setDraggingEnabled(enabled) {
+        gameBoard.querySelectorAll('.vehicle').forEach(v => {
+            v.style.pointerEvents = enabled ? 'auto' : 'none';
+        });
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  § 7  關卡資料驗證（v12 強化版）
+    // ════════════════════════════════════════════════════════════════
+    function validateLevelData(levelData) {
+        if (!levelData || typeof levelData !== 'object') return false;
+
+        // exitRow 檢查
+        if (!Number.isInteger(levelData.exitRow) || levelData.exitRow < 0 || levelData.exitRow >= GRID_SIZE) {
+            console.error('Schema Validation: 無效的 exitRow', levelData.exitRow);
+            return false;
+        }
+
+        // vehicles 檢查
+        if (!Array.isArray(levelData.vehicles) || levelData.vehicles.length === 0) return false;
+        let playerCount = 0;
+        for (const v of levelData.vehicles) {
+            const { id, length, row, col, orientation, isPlayer } = v;
+            if (typeof id !== 'string' || id.trim() === '') return false;
+            if (!Number.isInteger(length) || length < 2 || length > GRID_SIZE) return false;
+            if (!Number.isInteger(row) || row < 0 || row >= GRID_SIZE) return false;
+            if (!Number.isInteger(col) || col < 0 || col >= GRID_SIZE) return false;
+            if (orientation === 'horizontal' && col + length > GRID_SIZE) return false;
+            if (orientation === 'vertical' && row + length > GRID_SIZE) return false;
+            if (orientation !== 'horizontal' && orientation !== 'vertical') return false;
+            if (isPlayer === true) playerCount++;
+        }
+        if (playerCount !== 1) {
+            console.error('Schema Validation: 必須且只能有一輛 isPlayer:true 的紅色車 X');
+            return false;
+        }
+
+        // solutionSteps 強化驗證（v12 關鍵修復）
+        if (Array.isArray(levelData.solutionSteps)) {
+            for (const step of levelData.solutionSteps) {
+                if (typeof step !== 'object' || step === null) return false;
+                if (typeof step.id !== 'string' || step.id.trim() === '') return false;
+                if (!['left', 'right', 'up', 'down'].includes(step.direction)) return false;
+                if (!Number.isInteger(step.steps) || step.steps < 0) return false;
+            }
+        } else if (levelData.solutionSteps !== undefined) {
+            return false;
+        }
+
+        return true;
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  § 8  關卡設置（v12 防重入鎖 + 完整性驗證）
+    // ════════════════════════════════════════════════════════════════
+    function setupLevel(levelIdx) {
+        if (isSettingUp) return;
+        isSettingUp = true;
+
         stopSolutionPlayback();
-        currentPlaybackToken++;          
-        isAnimating = true;              
+        currentPlaybackToken++;
+        isAnimating = true;
 
         setUILocked(false);
         winMessageModal.classList.remove('show');
@@ -2187,15 +2157,19 @@ function setupLevel(levelIdx) {
             gameBoard.innerHTML = '';
             safeSetText(winMessage, '錯誤：無效的關卡索引。');
             nextLevelButton.classList.add('hidden');
+            isSettingUp = false;
+            isAnimating = false;
             return;
         }
 
         const levelData = gameLevels[levelIdx];
         if (!validateLevelData(levelData)) {
             gameBoard.innerHTML = '';
-            safeSetText(winMessage, `錯誤：關卡 ${levelIdx + 1} 資料格式不正確（缺少玩家車輛或座標錯誤）。`);
+            safeSetText(winMessage, `錯誤：關卡 ${levelIdx + 1} 資料格式不正確，已略過。`);
             winMessage.classList.add('bg-red-100', 'text-red-700', 'p-3');
             nextLevelButton.classList.add('hidden');
+            isSettingUp = false;
+            isAnimating = false;
             return;
         }
 
@@ -2206,12 +2180,11 @@ function setupLevel(levelIdx) {
         winMessage.classList.remove('bg-green-200', 'text-green-700', 'p-3');
         nextLevelButton.classList.add('hidden');
 
-        _cleanupDrag();
+        cleanupDrag();
 
         gameBoard.innerHTML = '';
-        while (gameBoard.firstChild) gameBoard.removeChild(gameBoard.firstChild);
 
-        boardState = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
+        boardState = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null));
 
         const exitArea = document.createElement('div');
         exitArea.className = 'exit-area';
@@ -2242,406 +2215,383 @@ function setupLevel(levelIdx) {
             gameBoard.appendChild(el);
         });
 
-    } catch (err) {
-        console.error('setupLevel 發生未預期錯誤：', err);
-        safeSetText(winMessage, '載入關卡時發生錯誤，請重新整理頁面。');
-        winMessage.classList.add('bg-red-100', 'text-red-700', 'p-3');
-    } finally {
-        // 無論成功或失敗都釋放鎖 → 解決問題 #1
         isSettingUp = false;
         isAnimating = false;
     }
-}
 
-// ════════════════════════════════════════════════════════════════
-//  § 8  拖曳邏輯（保持原樣）
-// ════════════════════════════════════════════════════════════════
-
-function _cleanupDrag() {
-    if (!dragState) return;
-    dragState.vehicleEl.classList.remove('dragging');
-    dragState = null;
-    if (dragAbortController) {
-        dragAbortController.abort();
-        dragAbortController = null;
-    }
-}
-
-function onDragStart(e) {
-    if (dragState || isPlayingSolution || isAnimating) return;
-    e.preventDefault();
-
-    const vehicleEl   = e.currentTarget;
-    const vehicleData = vehicleEl.vehicleData;
-
-    updateBoardState(vehicleData, null);
-    let minCol = vehicleData.col, maxCol = vehicleData.col;
-    let minRow = vehicleData.row, maxRow = vehicleData.row;
-    if (vehicleData.orientation === 'horizontal') {
-        while (minCol > 0 && canMoveTo(vehicleData, vehicleData.row, minCol - 1)) minCol--;
-        while (maxCol + vehicleData.length < GRID_SIZE && canMoveTo(vehicleData, vehicleData.row, maxCol + 1)) maxCol++;
-    } else {
-        while (minRow > 0 && canMoveTo(vehicleData, minRow - 1, vehicleData.col)) minRow--;
-        while (maxRow + vehicleData.length < GRID_SIZE && canMoveTo(vehicleData, maxRow + 1, vehicleData.col)) maxRow++;
-    }
-
-    const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-    const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-    const rect    = vehicleEl.getBoundingClientRect();
-
-    dragState = {
-        vehicleEl,
-        vehicleData,
-        offsetX: clientX - rect.left,
-        offsetY: clientY - rect.top,
-        minCol, maxCol, minRow, maxRow,
-        bounds: {
-            minX: minCol * CELL_SIZE_PX, maxX: maxCol * CELL_SIZE_PX,
-            minY: minRow * CELL_SIZE_PX, maxY: maxRow * CELL_SIZE_PX,
-        },
-    };
-    vehicleEl.classList.add('dragging');
-
-    dragAbortController = new AbortController();
-    const { signal } = dragAbortController;
-
-    document.addEventListener('mousemove', onDragMove, { signal });
-    window.addEventListener('mouseup',    onDragEnd,  { signal });
-    document.addEventListener('touchmove', onDragMove, { signal, passive: false });
-    window.addEventListener('touchend',   onDragEnd,  { signal });
-    window.addEventListener('blur',             _cleanupDragSafe, { signal });
-    document.addEventListener('visibilitychange', _cleanupDragSafe, { signal });
-}
-
-function _cleanupDragSafe() {
-    if (!dragState) return;
-    _snapAndCommit();
-    _cleanupDrag();
-}
-
-function onDragMove(e) {
-    if (!dragState) return;
-    e.preventDefault();
-
-    const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-    const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-    const boardRect = gameBoard.getBoundingClientRect();
-    const { vehicleEl, vehicleData, offsetX, offsetY, bounds } = dragState;
-
-    const rawX = clientX - boardRect.left - offsetX;
-    const rawY = clientY - boardRect.top  - offsetY;
-
-    if (vehicleData.orientation === 'horizontal') {
-        vehicleEl.style.left = Math.max(bounds.minX, Math.min(rawX, bounds.maxX)) + 'px';
-    } else {
-        vehicleEl.style.top  = Math.max(bounds.minY, Math.min(rawY, bounds.maxY)) + 'px';
-    }
-}
-
-function _snapAndCommit() {
-    if (!dragState) return;
-    const { vehicleEl, vehicleData, minCol, maxCol, minRow, maxRow } = dragState;
-
-    let finalCol = vehicleData.col;
-    let finalRow = vehicleData.row;
-
-    if (vehicleData.orientation === 'horizontal') {
-        const rawCol = parseFloat(vehicleEl.style.left) / CELL_SIZE_PX;
-        finalCol = Math.max(minCol, Math.min(maxCol, clampVehiclePos(rawCol, vehicleData.length)));
-    } else {
-        const rawRow = parseFloat(vehicleEl.style.top) / CELL_SIZE_PX;
-        finalRow = Math.max(minRow, Math.min(maxRow, clampVehiclePos(rawRow, vehicleData.length)));
-    }
-
-    vehicleData.col = finalCol;
-    vehicleData.row = finalRow;
-    vehicleEl.style.left = finalCol * CELL_SIZE_PX + 'px';
-    vehicleEl.style.top  = finalRow * CELL_SIZE_PX + 'px';
-
-    updateBoardState(vehicleData, vehicleData.id);
-}
-
-function onDragEnd() {
-    if (!dragState) return;
-    _snapAndCommit();
-    _cleanupDrag();
-    checkWinCondition();
-}
-
-// ════════════════════════════════════════════════════════════════
-//  § 9  勝利判斷（保持原樣）
-// ════════════════════════════════════════════════════════════════
-
-function checkWinCondition() {
-    const player    = vehicles.find(v => v.isPlayer);
-    const levelData = gameLevels[currentLevelIndex];
-    if (!player || player.orientation !== 'horizontal') return;
-    if (player.row !== levelData.exitRow) return;
-    if (player.col + player.length !== GRID_SIZE) return;
-
-    const hasNext = currentLevelIndex < gameLevels.length - 1;
-
-    if (isMobile()) {
-        safeSetText(winModalText, hasNext ? '你贏了！' : '你贏了！已完成所有關卡！');
-        winModalNextLevelButton.classList.toggle('hidden', !hasNext);
-        winMessageModal.classList.add('show');
-        if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
-    } else {
-        safeSetText(winMessage, hasNext ? '恭喜！你贏了！' : '恭喜！你贏了！已完成所有關卡！');
-        winMessage.classList.add('bg-green-200', 'text-green-700', 'p-3');
-        if (hasNext) nextLevelButton.classList.remove('hidden');
-    }
-}
-
-// ════════════════════════════════════════════════════════════════
-//  § 10  解答播放（v11 已由 setupLevel 加強 token 保護）
-// ════════════════════════════════════════════════════════════════
-
-async function playSolution() {
-    if (isPlayingSolution) return;
-    const level = gameLevels[currentLevelIndex];
-    if (!level.solutionSteps?.length) { alert('此關尚無解答'); return; }
-
-    setupLevel(currentLevelIndex);   // 會自動 ++ token 並鎖定 isAnimating
-    const myToken = currentPlaybackToken;
-
-    isPlayingSolution = true;
-    isAnimating       = true;
-    setUILocked(true);
-    setDraggingEnabled(false);
-
-    try {
-        for (const step of level.solutionSteps) {
-            if (currentPlaybackToken !== myToken) break;
-            await applySolutionStep(step, myToken);
-            if (currentPlaybackToken !== myToken) break;
-            await sleep(STEP_DELAY_MS);
-        }
-    } finally {
-        if (currentPlaybackToken === myToken) {
-            setDraggingEnabled(true);
-            isPlayingSolution = false;
-            isAnimating       = false;
-            setUILocked(false);
+    // ════════════════════════════════════════════════════════════════
+    //  § 9  拖曳邏輯（保持原樣）
+    // ════════════════════════════════════════════════════════════════
+    function cleanupDrag() {
+        if (!dragState) return;
+        dragState.vehicleEl.classList.remove('dragging');
+        dragState = null;
+        if (dragAbortController) {
+            dragAbortController.abort();
+            dragAbortController = null;
         }
     }
-}
 
-async function applySolutionStep(step, token) {
-    if (currentPlaybackToken !== token) return;
-    const vehicle    = vehicles.find(v => v.id === step.id);
-    const vehicleEl  = vehicle ? vehicle.el : null;
-    if (!vehicle || !vehicleEl || !gameBoard.contains(vehicleEl)) return;
+    function onDragStart(e) {
+        if (dragState || isPlayingSolution || isAnimating) return;
+        e.preventDefault();
 
-    vehicleEl.classList.remove('animating');
-    void vehicleEl.offsetWidth;
+        const vehicleEl = e.currentTarget;
+        const vehicleData = vehicleEl.vehicleData;
 
-    const { direction, steps } = step;
-    let newRow = vehicle.row;
-    let newCol = vehicle.col;
-    if (direction === 'left')  newCol -= steps;
-    if (direction === 'right') newCol += steps;
-    if (direction === 'up')    newRow -= steps;
-    if (direction === 'down')  newRow += steps;
+        updateBoardState(vehicleData, null);
 
-    updateBoardState(vehicle, null);
+        let minCol = vehicleData.col, maxCol = vehicleData.col;
+        let minRow = vehicleData.row, maxRow = vehicleData.row;
+        if (vehicleData.orientation === 'horizontal') {
+            while (minCol > 0 && canMoveTo(vehicleData, vehicleData.row, minCol - 1)) minCol--;
+            while (maxCol + vehicleData.length < GRID_SIZE && canMoveTo(vehicleData, vehicleData.row, maxCol + 1)) maxCol++;
+        } else {
+            while (minRow > 0 && canMoveTo(vehicleData, minRow - 1, vehicleData.col)) minRow--;
+            while (maxRow + vehicleData.length < GRID_SIZE && canMoveTo(vehicleData, maxRow + 1, vehicleData.col)) maxRow++;
+        }
 
-    if (vehicle.orientation === 'horizontal') {
-        vehicle.col = clampVehiclePos(newCol, vehicle.length);
-        vehicleEl.classList.add('animating');
-        vehicleEl.style.left = vehicle.col * CELL_SIZE_PX + 'px';
-    } else {
-        vehicle.row = clampVehiclePos(newRow, vehicle.length);
-        vehicleEl.classList.add('animating');
-        vehicleEl.style.top = vehicle.row * CELL_SIZE_PX + 'px';
+        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+        const rect = vehicleEl.getBoundingClientRect();
+
+        dragState = {
+            vehicleEl,
+            vehicleData,
+            offsetX: clientX - rect.left,
+            offsetY: clientY - rect.top,
+            minCol, maxCol, minRow, maxRow,
+            bounds: {
+                minX: minCol * CELL_SIZE_PX, maxX: maxCol * CELL_SIZE_PX,
+                minY: minRow * CELL_SIZE_PX, maxY: maxRow * CELL_SIZE_PX,
+            },
+        };
+        vehicleEl.classList.add('dragging');
+
+        dragAbortController = new AbortController();
+        const { signal } = dragAbortController;
+
+        document.addEventListener('mousemove', onDragMove, { signal });
+        window.addEventListener('mouseup', onDragEnd, { signal });
+        document.addEventListener('touchmove', onDragMove, { signal, passive: false });
+        window.addEventListener('touchend', onDragEnd, { signal });
+        window.addEventListener('blur', cleanupDrag, { signal });
+        document.addEventListener('visibilitychange', cleanupDrag, { signal });
     }
 
-    updateBoardState(vehicle, vehicle.id);
-}
+    function onDragMove(e) {
+        if (!dragState) return;
+        e.preventDefault();
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+        const boardRect = gameBoard.getBoundingClientRect();
+        const { vehicleEl, vehicleData, offsetX, offsetY, bounds } = dragState;
 
-// ════════════════════════════════════════════════════════════════
-//  § 11  下拉選單管理（保持原樣）
-// ════════════════════════════════════════════════════════════════
+        const rawX = clientX - boardRect.left - offsetX;
+        const rawY = clientY - boardRect.top - offsetY;
 
-function populateDifficultySelect() {
-    difficultySelect.innerHTML = '';
-    for (const [key, diff] of Object.entries(difficulties)) {
-        const opt = document.createElement('option');
-        opt.value = key;
-        opt.textContent = diff.name;
-        difficultySelect.appendChild(opt);
-    }
-}
-
-function populateSpecificLevelSelect(difficultyKey, preferredLevelNum = null) {
-    const diff = difficulties[difficultyKey];
-    specificLevelSelect.innerHTML = '';
-    if (!diff) {
-        const opt = document.createElement('option');
-        opt.value = '';
-        opt.textContent = '--';
-        specificLevelSelect.appendChild(opt);
-        return;
-    }
-    let firstAvailable = null;
-    for (let num = diff.startLevel; num <= diff.endLevel; num++) {
-        if (!gameLevels.find(lvl => lvl.levelNumber === num)) continue;
-        if (firstAvailable === null) firstAvailable = num;
-        const opt = document.createElement('option');
-        opt.value = num;
-        opt.textContent = `關卡 ${num}`;
-        specificLevelSelect.appendChild(opt);
-    }
-    const target = preferredLevelNum ?? firstAvailable;
-    if (target && specificLevelSelect.querySelector(`option[value="${target}"]`)) {
-        specificLevelSelect.value = target;
-    } else if (!firstAvailable) {
-        const opt = document.createElement('option');
-        opt.value = '';
-        opt.textContent = '無關卡';
-        specificLevelSelect.appendChild(opt);
-    }
-}
-
-function syncDropdownsToLevel(levelIdx) {
-    const levelData = gameLevels[levelIdx];
-    if (!levelData) return;
-    const num = levelData.levelNumber;
-    const diffKey = Object.keys(difficulties).find(k =>
-        num >= difficulties[k].startLevel && num <= difficulties[k].endLevel
-    );
-    if (!diffKey) return;
-    if (difficultySelect.value !== diffKey) {
-        difficultySelect.value = diffKey;
-        populateSpecificLevelSelect(diffKey, num);
-    } else if (specificLevelSelect.querySelector(`option[value="${num}"]`)) {
-        specificLevelSelect.value = num;
-    } else {
-        populateSpecificLevelSelect(diffKey, num);
-    }
-}
-
-// ════════════════════════════════════════════════════════════════
-//  § 12  視窗縮放（v11 核心效能修正）
-// ════════════════════════════════════════════════════════════════
-
-let _resizeTimer = null;
-
-function handleResize() {
-    // v11 修正 #2：使用預先快取的 vData.el，避免每次 resize 都 querySelector
-    if (dragState) {
-        _snapAndCommit();
-        _cleanupDrag();
+        if (vehicleData.orientation === 'horizontal') {
+            vehicleEl.style.left = Math.max(bounds.minX, Math.min(rawX, bounds.maxX)) + 'px';
+        } else {
+            vehicleEl.style.top = Math.max(bounds.minY, Math.min(rawY, bounds.maxY)) + 'px';
+        }
     }
 
-    clearTimeout(_resizeTimer);
-    _resizeTimer = setTimeout(() => {
-        calculateCellSize();
+    function onDragEnd() {
+        if (!dragState) return;
+        const { vehicleEl, vehicleData, minCol, maxCol, minRow, maxRow } = dragState;
 
-        // 使用快取的 el 直接套用樣式，大幅減少 Layout Reflow
-        vehicles.forEach(vData => {
-            if (vData.el) applyVehicleStyle(vData.el, vData);
+        let finalCol = vehicleData.col;
+        let finalRow = vehicleData.row;
+
+        if (vehicleData.orientation === 'horizontal') {
+            const rawCol = parseFloat(vehicleEl.style.left) / CELL_SIZE_PX;
+            finalCol = Math.max(minCol, Math.min(maxCol, clampVehiclePos(rawCol, vehicleData.length)));
+        } else {
+            const rawRow = parseFloat(vehicleEl.style.top) / CELL_SIZE_PX;
+            finalRow = Math.max(minRow, Math.min(maxRow, clampVehiclePos(rawRow, vehicleData.length)));
+        }
+
+        vehicleData.col = finalCol;
+        vehicleData.row = finalRow;
+        vehicleEl.style.left = finalCol * CELL_SIZE_PX + 'px';
+        vehicleEl.style.top = finalRow * CELL_SIZE_PX + 'px';
+
+        updateBoardState(vehicleData, vehicleData.id);
+        cleanupDrag();
+        checkWinCondition();
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  § 10  勝利判斷
+    // ════════════════════════════════════════════════════════════════
+    function checkWinCondition() {
+        const player = vehicles.find(v => v.isPlayer);
+        const levelData = gameLevels[currentLevelIndex];
+        if (!player || player.orientation !== 'horizontal') return;
+        if (player.row !== levelData.exitRow) return;
+        if (player.col + player.length !== GRID_SIZE) return;
+
+        const hasNext = currentLevelIndex < gameLevels.length - 1;
+
+        if (isMobile()) {
+            safeSetText(winModalText, hasNext ? '你贏了！' : '你贏了！已完成所有關卡！');
+            winModalNextLevelButton.classList.toggle('hidden', !hasNext);
+            winMessageModal.classList.add('show');
+            if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+        } else {
+            safeSetText(winMessage, hasNext ? '恭喜！你贏了！' : '恭喜！你贏了！已完成所有關卡！');
+            winMessage.classList.add('bg-green-200', 'text-green-700', 'p-3');
+            if (hasNext) nextLevelButton.classList.remove('hidden');
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  § 11  解答播放（v12 token 保護更嚴格）
+    // ════════════════════════════════════════════════════════════════
+    async function playSolution() {
+        if (isPlayingSolution) return;
+        const level = gameLevels[currentLevelIndex];
+        if (!level.solutionSteps?.length) {
+            alert('此關尚無解答');
+            return;
+        }
+
+        setupLevel(currentLevelIndex);
+        const myToken = currentPlaybackToken;
+
+        isPlayingSolution = true;
+        isAnimating = true;
+        setUILocked(true);
+        setDraggingEnabled(false);
+
+        try {
+            for (const step of level.solutionSteps) {
+                if (currentPlaybackToken !== myToken) break;
+                await applySolutionStep(step, myToken);
+                if (currentPlaybackToken !== myToken) break;
+                await new Promise(r => setTimeout(r, STEP_DELAY_MS));
+            }
+        } finally {
+            if (currentPlaybackToken === myToken) {
+                setDraggingEnabled(true);
+                isPlayingSolution = false;
+                isAnimating = false;
+                setUILocked(false);
+            }
+        }
+    }
+
+    async function applySolutionStep(step, token) {
+        if (currentPlaybackToken !== token) return;
+        const vehicle = vehicles.find(v => v.id === step.id);
+        const vehicleEl = vehicle ? vehicle.el : null;
+        if (!vehicle || !vehicleEl || !gameBoard.contains(vehicleEl)) return;
+
+        vehicleEl.classList.remove('animating');
+        void vehicleEl.offsetWidth;
+
+        const { direction, steps } = step;
+        let newRow = vehicle.row;
+        let newCol = vehicle.col;
+        if (direction === 'left') newCol -= steps;
+        if (direction === 'right') newCol += steps;
+        if (direction === 'up') newRow -= steps;
+        if (direction === 'down') newRow += steps;
+
+        updateBoardState(vehicle, null);
+
+        if (vehicle.orientation === 'horizontal') {
+            vehicle.col = clampVehiclePos(newCol, vehicle.length);
+            vehicleEl.classList.add('animating');
+            vehicleEl.style.left = vehicle.col * CELL_SIZE_PX + 'px';
+        } else {
+            vehicle.row = clampVehiclePos(newRow, vehicle.length);
+            vehicleEl.classList.add('animating');
+            vehicleEl.style.top = vehicle.row * CELL_SIZE_PX + 'px';
+        }
+
+        updateBoardState(vehicle, vehicle.id);
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  § 12  下拉選單管理
+    // ════════════════════════════════════════════════════════════════
+    function populateDifficultySelect() {
+        difficultySelect.innerHTML = '';
+        for (const [key, diff] of Object.entries(difficulties)) {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = diff.name;
+            difficultySelect.appendChild(opt);
+        }
+    }
+
+    function populateSpecificLevelSelect(difficultyKey, preferredLevelNum = null) {
+        const diff = difficulties[difficultyKey];
+        specificLevelSelect.innerHTML = '';
+        if (!diff) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = '--';
+            specificLevelSelect.appendChild(opt);
+            return;
+        }
+        let firstAvailable = null;
+        for (let num = diff.startLevel; num <= diff.endLevel; num++) {
+            if (!gameLevels.find(lvl => lvl.levelNumber === num)) continue;
+            if (firstAvailable === null) firstAvailable = num;
+            const opt = document.createElement('option');
+            opt.value = num;
+            opt.textContent = `關卡 ${num}`;
+            specificLevelSelect.appendChild(opt);
+        }
+        const target = preferredLevelNum ?? firstAvailable;
+        if (target && specificLevelSelect.querySelector(`option[value="${target}"]`)) {
+            specificLevelSelect.value = target;
+        } else if (!firstAvailable) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = '無關卡';
+            specificLevelSelect.appendChild(opt);
+        }
+    }
+
+    function syncDropdownsToLevel(levelIdx) {
+        const levelData = gameLevels[levelIdx];
+        if (!levelData) return;
+        const num = levelData.levelNumber;
+        const diffKey = Object.keys(difficulties).find(k =>
+            num >= difficulties[k].startLevel && num <= difficulties[k].endLevel
+        );
+        if (!diffKey) return;
+        if (difficultySelect.value !== diffKey) {
+            difficultySelect.value = diffKey;
+            populateSpecificLevelSelect(diffKey, num);
+        } else if (specificLevelSelect.querySelector(`option[value="${num}"]`)) {
+            specificLevelSelect.value = num;
+        } else {
+            populateSpecificLevelSelect(diffKey, num);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  § 13  視窗縮放
+    // ════════════════════════════════════════════════════════════════
+    let _resizeTimer = null;
+
+    function handleResize() {
+        if (dragState) {
+            // 強制 snap
+            const { vehicleEl, vehicleData, minCol, maxCol, minRow, maxRow } = dragState;
+            let finalCol = vehicleData.col;
+            let finalRow = vehicleData.row;
+            if (vehicleData.orientation === 'horizontal') {
+                const rawCol = parseFloat(vehicleEl.style.left) / CELL_SIZE_PX;
+                finalCol = Math.max(minCol, Math.min(maxCol, clampVehiclePos(rawCol, vehicleData.length)));
+            } else {
+                const rawRow = parseFloat(vehicleEl.style.top) / CELL_SIZE_PX;
+                finalRow = Math.max(minRow, Math.min(maxRow, clampVehiclePos(rawRow, vehicleData.length)));
+            }
+            vehicleData.col = finalCol;
+            vehicleData.row = finalRow;
+            vehicleEl.style.left = finalCol * CELL_SIZE_PX + 'px';
+            vehicleEl.style.top = finalRow * CELL_SIZE_PX + 'px';
+            updateBoardState(vehicleData, vehicleData.id);
+            cleanupDrag();
+        }
+
+        clearTimeout(_resizeTimer);
+        _resizeTimer = setTimeout(() => {
+            calculateCellSize();
+            vehicles.forEach(vData => {
+                if (vData.el) applyVehicleStyle(vData.el, vData);
+            });
+            positionExitElements();
+        }, 120);
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  § 14  事件綁定（v12 補完 winMessageModal 背景點擊關閉）
+    // ════════════════════════════════════════════════════════════════
+    function bindEvents() {
+        resetButton.addEventListener('click', () => {
+            setupLevel(currentLevelIndex);
+        }, true);
+
+        nextLevelButton.addEventListener('click', () => {
+            if (currentLevelIndex < gameLevels.length - 1) setupLevel(currentLevelIndex + 1);
         });
 
-        positionExitElements();
-    }, 120);
-}
+        showSolutionButton.addEventListener('click', playSolution);
 
-// ════════════════════════════════════════════════════════════════
-//  § 13  事件綁定（resetButton 使用 capture 模式）
-// ════════════════════════════════════════════════════════════════
+        difficultySelect.addEventListener('change', e => {
+            stopSolutionPlayback();
+            setUILocked(false);
+            const key = e.target.value;
+            populateSpecificLevelSelect(key);
+            const levelNum = parseInt(specificLevelSelect.value);
+            const idx = gameLevels.findIndex(l => l.levelNumber === levelNum);
+            if (idx !== -1) setupLevel(idx);
+        });
 
-resetButton.addEventListener('click', () => {
-    resetButton.disabled = false;
-    setupLevel(currentLevelIndex);
-}, true);
+        specificLevelSelect.addEventListener('change', e => {
+            stopSolutionPlayback();
+            setUILocked(false);
+            const idx = gameLevels.findIndex(l => l.levelNumber === parseInt(e.target.value));
+            if (idx !== -1) setupLevel(idx);
+        });
 
-nextLevelButton.addEventListener('click', () => {
-    if (currentLevelIndex < gameLevels.length - 1) setupLevel(currentLevelIndex + 1);
-});
+        showInstructionsButton.addEventListener('click', () => instructionsModal.classList.add('show'));
+        closeInstructionsButton.addEventListener('click', () => instructionsModal.classList.remove('show'));
+        instructionsModal.addEventListener('click', e => {
+            if (e.target === instructionsModal) instructionsModal.classList.remove('show');
+        });
 
-showSolutionButton.addEventListener('click', playSolution);
+        // v12 新增：winMessageModal 背景點擊關閉（UX 一致性）
+        winModalCloseButton.addEventListener('click', () => winMessageModal.classList.remove('show'));
+        winModalNextLevelButton.addEventListener('click', () => {
+            winMessageModal.classList.remove('show');
+            if (currentLevelIndex < gameLevels.length - 1) setupLevel(currentLevelIndex + 1);
+        });
+        winMessageModal.addEventListener('click', e => {
+            if (e.target === winMessageModal) winMessageModal.classList.remove('show');
+        });
 
-difficultySelect.addEventListener('change', e => {
-    stopSolutionPlayback();
-    setUILocked(false);
-    const key = e.target.value;
-    populateSpecificLevelSelect(key);
-    const levelNum = parseInt(specificLevelSelect.value);
-    const idx = gameLevels.findIndex(l => l.levelNumber === levelNum);
-    if (idx !== -1) {
-        setupLevel(idx);
-    } else {
-        gameBoard.innerHTML = '';
-        const msg = document.createElement('p');
-        msg.className = 'text-center p-4';
-        msg.textContent = '此難易度尚無關卡。';
-        gameBoard.appendChild(msg);
-        safeSetText(winMessage, '');
-        nextLevelButton.classList.add('hidden');
-    }
-});
-
-specificLevelSelect.addEventListener('change', e => {
-    stopSolutionPlayback();
-    setUILocked(false);
-    const idx = gameLevels.findIndex(l => l.levelNumber === parseInt(e.target.value));
-    if (idx !== -1) setupLevel(idx);
-});
-
-showInstructionsButton.addEventListener('click', () => instructionsModal.classList.add('show'));
-closeInstructionsButton.addEventListener('click', () => instructionsModal.classList.remove('show'));
-instructionsModal.addEventListener('click', e => {
-    if (e.target === instructionsModal) instructionsModal.classList.remove('show');
-});
-
-winModalCloseButton.addEventListener('click', () => winMessageModal.classList.remove('show'));
-winModalNextLevelButton.addEventListener('click', () => {
-    winMessageModal.classList.remove('show');
-    if (currentLevelIndex < gameLevels.length - 1) setupLevel(currentLevelIndex + 1);
-});
-
-window.addEventListener('resize', handleResize);
-
-// ════════════════════════════════════════════════════════════════
-//  § 14  初始化
-// ════════════════════════════════════════════════════════════════
-
-(function init() {
-    if (!gameLevels.length) {
-        const msg = document.createElement('p');
-        msg.className = 'text-center p-4';
-        msg.textContent = '沒有定義任何關卡。';
-        gameBoard.appendChild(msg);
-        safeSetText(winMessage, '請先定義遊戲關卡。');
-        const optD = document.createElement('option');
-        optD.textContent = '無難易度';
-        difficultySelect.innerHTML = '';
-        difficultySelect.appendChild(optD);
-        const optL = document.createElement('option');
-        optL.textContent = '無關卡';
-        specificLevelSelect.innerHTML = '';
-        specificLevelSelect.appendChild(optL);
-        [difficultySelect, specificLevelSelect].forEach(el => el.disabled = true);
-        return;
+        window.addEventListener('resize', handleResize);
     }
 
-    calculateCellSize();
-    populateDifficultySelect();
+    // ════════════════════════════════════════════════════════════════
+    //  § 15  初始化
+    // ════════════════════════════════════════════════════════════════
+    function init() {
+        if (!gameLevels.length) {
+            const msg = document.createElement('p');
+            msg.className = 'text-center p-4';
+            msg.textContent = '沒有定義任何關卡。';
+            gameBoard.appendChild(msg);
+            safeSetText(winMessage, '請先定義遊戲關卡。');
+            return;
+        }
 
-    const firstDiffKey = Object.keys(difficulties)[0];
-    difficultySelect.value = firstDiffKey;
-    populateSpecificLevelSelect(firstDiffKey, difficulties[firstDiffKey].startLevel);
+        calculateCellSize();
+        populateDifficultySelect();
 
-    const initLevelNum = parseInt(specificLevelSelect.value);
-    const initIdx = gameLevels.findIndex(l => l.levelNumber === initLevelNum);
-    setupLevel(initIdx !== -1 ? initIdx : 0);
+        const firstDiffKey = Object.keys(difficulties)[0];
+        difficultySelect.value = firstDiffKey;
+        populateSpecificLevelSelect(firstDiffKey, difficulties[firstDiffKey].startLevel);
+
+        const initLevelNum = parseInt(specificLevelSelect.value);
+        const initIdx = gameLevels.findIndex(l => l.levelNumber === initLevelNum);
+        setupLevel(initIdx !== -1 ? initIdx : 0);
+
+        bindEvents();
+    }
+
+    // 啟動遊戲
+    init();
 })();
-
 </script>
 </body>
 </html>
